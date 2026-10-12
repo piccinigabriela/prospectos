@@ -1,0 +1,1258 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prospectos</title>
+<meta name="theme-color" content="#0d7a5c">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<style>
+:root{
+  --bg:#f5f4f0; --surface:#ffffff; --surface-2:#efede8; --text:#1d1c1a; --muted:#6c6963; --border:#e2dfd8;
+  --accent:#0d7a5c; --accent-ink:#ffffff; --accent-soft:#e1f1ea;
+  --warn:#9a5800; --warn-soft:#fbefd9; --danger:#b42318; --danger-soft:#fdeceb; --neutral-soft:#ebeae6;
+  --blue:#2c5aa0; --blue-soft:#e6eefa; --violet:#6b3fa0; --violet-soft:#f0e8fa;
+  --radius:12px; --shadow:0 10px 40px rgba(20,20,10,.18);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#131311; --surface:#1c1b19; --surface-2:#262522; --text:#ecebe6; --muted:#9e9b94; --border:#34322e;
+    --accent:#3ccb9b; --accent-ink:#0b231b; --accent-soft:#163329;
+    --warn:#f1b65f; --warn-soft:#3a2b13; --danger:#f2877d; --danger-soft:#3b1e1b; --neutral-soft:#2b2a27;
+    --blue:#8fb3ec; --blue-soft:#1d2a3d; --violet:#c3a2ec; --violet-soft:#2c2238;
+    --shadow:0 10px 40px rgba(0,0,0,.5);
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--text);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+[hidden]{display:none !important}
+a{color:inherit}
+button,.btn{font:inherit;font-size:14px;border-radius:9px;border:1px solid var(--border);background:var(--surface);color:var(--text);padding:8px 14px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;text-decoration:none;white-space:nowrap}
+button:hover,.btn:hover{background:var(--surface-2)}
+button.primary,.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
+button.primary:hover,.btn.primary:hover{filter:brightness(1.07)}
+button:disabled{opacity:.45;cursor:not-allowed}
+button.ghost{border-color:transparent;background:transparent;padding:6px 8px;color:var(--muted)}
+button.ghost:hover{background:var(--surface-2);color:var(--text)}
+button.danger{color:var(--danger);border-color:var(--danger-soft)}
+button.danger:hover{background:var(--danger-soft)}
+input,select,textarea{font:inherit;font-size:14px;color:var(--text);background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:8px 10px;min-width:0}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+textarea{width:100%;resize:vertical}
+svg{width:16px;height:16px;flex:none}
+.wrap{max-width:1180px;margin:0 auto;padding:0 16px}
+.muted{color:var(--muted)}
+.hint{color:var(--muted);font-size:13px;margin:6px 0 0}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.spacer{flex:1}
+
+/* Login */
+.login{min-height:100vh;display:grid;place-items:center;padding:16px}
+.login form{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px 24px;width:100%;max-width:360px;display:grid;gap:12px}
+.login h1{margin:0;font-size:22px}
+.login label{display:grid;gap:4px;font-size:13px;color:var(--muted)}
+.login .err{color:var(--danger);font-size:14px;min-height:1.2em;margin:0}
+
+/* Header */
+.top{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
+.top .wrap{display:flex;align-items:center;gap:16px;height:58px}
+.brand{font-weight:700;font-size:17px;letter-spacing:-.01em}
+.tabs{display:flex;gap:4px;background:var(--surface-2);padding:3px;border-radius:10px}
+.tabs button{border:0;background:transparent;padding:6px 14px;border-radius:8px;color:var(--muted);font-weight:500}
+.tabs button.on{background:var(--surface);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.user{font-size:13px;color:var(--muted)}
+@media (max-width:640px){.user-mail{display:none}.top .wrap{gap:10px}.brand{font-size:15px}}
+@media (max-width:440px){.brand{display:none}.tabs button{padding:6px 12px}}
+
+main{padding:20px 0 80px}
+
+/* Chips */
+.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:12px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{border-radius:999px;padding:6px 12px;font-size:13.5px;border:1px solid var(--border);background:var(--surface);color:var(--text);flex:none}
+.chip b{font-weight:600;margin-left:4px;color:var(--muted);font-variant-numeric:tabular-nums}
+.chip.on{background:var(--text);color:var(--bg);border-color:var(--text)}
+.chip.on b{color:inherit;opacity:.7}
+.chip.hot b{color:var(--danger)}
+.chip.on.hot b{color:inherit}
+
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.toolbar input[type=search]{flex:1 1 220px;max-width:340px}
+
+/* Lists */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+table{width:100%;border-collapse:collapse}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);text-align:left;font-weight:600;padding:10px 14px;border-bottom:1px solid var(--border);background:var(--surface-2);white-space:nowrap}
+td{padding:11px 14px;border-bottom:1px solid var(--border);vertical-align:top}
+tr:last-child td{border-bottom:0}
+tbody.click tr{cursor:pointer}
+tbody.click tr:hover td{background:var(--surface-2)}
+tr.sel td{background:var(--accent-soft) !important}
+.name{font-weight:600}
+.meta{color:var(--muted);font-size:13px;margin-top:1px}
+.num{font:13.5px ui-monospace,SFMono-Regular,Menlo,monospace;font-variant-numeric:tabular-nums;white-space:nowrap}
+.phone{display:flex;align-items:center;gap:6px;white-space:nowrap}
+a.ic{display:inline-flex;color:var(--accent);padding:4px;border-radius:6px}
+a.ic:hover{background:var(--accent-soft)}
+.empty-state{padding:36px 16px;text-align:center;color:var(--muted)}
+.overdue{color:var(--danger);font-weight:600}
+.today{color:var(--warn);font-weight:600}
+
+.tag{font-size:11.5px;font-weight:600;border-radius:999px;padding:1px 8px;white-space:nowrap;display:inline-block}
+.tag.wa{background:var(--accent-soft);color:var(--accent)}
+.tag.unk{background:var(--warn-soft);color:var(--warn)}
+.tag.fijo,.tag.intl,.tag.muted{background:var(--neutral-soft);color:var(--muted)}
+.tag.reason{background:var(--danger-soft);color:var(--danger)}
+.st{font-size:12.5px;font-weight:600;border-radius:999px;padding:2px 10px;white-space:nowrap;display:inline-block}
+.st-nuevo{background:var(--neutral-soft);color:var(--muted)}
+.st-contactado{background:var(--blue-soft);color:var(--blue)}
+.st-sin_respuesta{background:var(--warn-soft);color:var(--warn)}
+.st-interesado{background:var(--accent-soft);color:var(--accent)}
+.st-demo{background:var(--violet-soft);color:var(--violet)}
+.st-cliente{background:var(--accent);color:var(--accent-ink)}
+.st-perdido{background:var(--danger-soft);color:var(--danger)}
+
+@media (max-width:760px){
+  table.resp,table.resp thead,table.resp tbody,table.resp tr,table.resp td{display:block}
+  table.resp thead{display:none}
+  table.resp tr{border-bottom:1px solid var(--border);padding:8px 0}
+  table.resp tr:last-child{border-bottom:0}
+  table.resp td{border:0;padding:3px 14px}
+  table.resp td.hide-m{display:none}
+  table.resp td[data-l]::before{content:attr(data-l)" ";font-size:12px;color:var(--muted)}
+}
+
+/* Drawer */
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.28);z-index:40;opacity:0;pointer-events:none;transition:opacity .2s}
+.scrim.on{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(520px,100%);background:var(--surface);z-index:50;box-shadow:var(--shadow);transform:translateX(102%);transition:transform .22s ease;display:flex;flex-direction:column}
+.drawer.on{transform:none}
+.d-head{display:flex;align-items:flex-start;gap:8px;padding:16px 16px 8px;border-bottom:1px solid var(--border)}
+.d-head input{flex:1;font-size:19px;font-weight:700;border-color:transparent;background:transparent;padding:4px 6px;margin-left:-6px}
+.d-head input:hover{background:var(--surface-2)}
+.d-body{flex:1;overflow-y:auto;padding:14px 16px 40px}
+.d-sec{margin-top:18px}
+.d-sec h3{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:0 0 8px;font-weight:600}
+.contact-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:6px}
+.contact-row .num{margin-right:2px}
+.btn.sm,button.sm{padding:5px 10px;font-size:13px;border-radius:8px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.grid2 label,.field{display:grid;gap:4px;font-size:12.5px;color:var(--muted)}
+.quick{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.seg{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px}
+.seg button{padding:5px 10px;font-size:13px;border-radius:999px}
+.seg button.on{background:var(--text);color:var(--bg);border-color:var(--text)}
+.timeline{display:grid;gap:2px}
+.note{display:grid;grid-template-columns:28px 1fr auto;gap:8px;padding:10px 0;border-bottom:1px solid var(--border)}
+.note:last-child{border-bottom:0}
+.note .k{width:28px;height:28px;border-radius:50%;background:var(--surface-2);display:grid;place-items:center;font-size:14px}
+.note .when{font-size:12.5px;color:var(--muted)}
+.note .body{white-space:pre-wrap;word-break:break-word}
+.note button{opacity:0;transition:opacity .15s}
+.note:hover button{opacity:1}
+@media (hover:none){.note button{opacity:.6}}
+details.more>summary{cursor:pointer;color:var(--muted);font-size:13px;list-style:none}
+details.more>summary::-webkit-details-marker{display:none}
+details.more>summary::before{content:"› ";display:inline-block;transition:transform .15s}
+details.more[open]>summary::before{transform:rotate(90deg)}
+
+/* Import view */
+.drop{border:2px dashed var(--border);border-radius:var(--radius);background:var(--surface);padding:24px 18px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s}
+.drop:hover,.drop.over{border-color:var(--accent);background:var(--accent-soft)}
+.drop strong{display:block;font-size:15px;margin-bottom:2px}
+.drop span{color:var(--muted);font-size:14px}
+details.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-top:10px}
+details.panel>summary{cursor:pointer;padding:11px 16px;font-size:14px;font-weight:600;list-style:none;display:flex;align-items:center;gap:8px}
+details.panel>summary::-webkit-details-marker{display:none}
+details.panel>summary::before{content:"›";display:inline-block;transition:transform .15s;color:var(--muted);font-size:18px;line-height:1}
+details.panel[open]>summary::before{transform:rotate(90deg)}
+.panel-body{padding:0 16px 16px}
+.panel-body textarea{font:13px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--bg)}
+label.check{display:flex;gap:8px;align-items:center;font-size:14px;margin-top:10px}
+.settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media (max-width:720px){.settings-grid{grid-template-columns:1fr}}
+.banner{margin-top:12px;padding:10px 14px;border-radius:10px;background:var(--warn-soft);color:var(--warn);font-size:14px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:18px 0 12px}
+@media (max-width:720px){.stats{grid-template-columns:repeat(2,1fr)}}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:11px 14px}
+.stat b{display:block;font-size:22px;line-height:1.15;font-variant-numeric:tabular-nums}
+.stat span{color:var(--muted);font-size:13px}
+h2{font-size:16px;margin:26px 0 10px}
+[contenteditable]{outline:none;border-radius:4px;padding:1px 3px;margin:-1px -3px}
+[contenteditable]:hover{background:var(--surface-2)}
+[contenteditable]:focus{background:var(--surface-2);box-shadow:0 0 0 2px var(--accent)}
+
+dialog{border:1px solid var(--border);border-radius:16px;padding:0;background:var(--surface);color:var(--text);width:min(440px,calc(100% - 32px));box-shadow:var(--shadow)}
+dialog::backdrop{background:rgba(0,0,0,.3)}
+dialog form{padding:20px;display:grid;gap:12px}
+dialog h3{margin:0;font-size:17px}
+dialog label{display:grid;gap:4px;font-size:13px;color:var(--muted)}
+
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(20px);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;opacity:0;transition:.2s;pointer-events:none;max-width:calc(100% - 32px);z-index:90}
+.toast.show{opacity:1;transform:translateX(-50%)}
+.loading{padding:60px 16px;text-align:center;color:var(--muted)}
+</style>
+</head>
+<body>
+
+<!-- Login -->
+<section class="login" id="vLogin" hidden>
+  <form id="loginForm">
+    <div>
+      <h1>Prospectos</h1>
+      <p class="muted" style="margin:4px 0 0;font-size:14px">Entrá con tu cuenta de Loomi.</p>
+    </div>
+    <label>Email<input type="email" id="lEmail" autocomplete="username" required></label>
+    <label>Contraseña<input type="password" id="lPass" autocomplete="current-password" required></label>
+    <p class="err" id="lErr"></p>
+    <button class="primary" type="submit" id="lBtn">Entrar</button>
+  </form>
+</section>
+
+<div class="loading" id="vBoot">Cargando…</div>
+
+<!-- App -->
+<div id="vApp" hidden>
+  <header class="top">
+    <div class="wrap">
+      <span class="brand">Prospectos</span>
+      <nav class="tabs">
+        <button data-tab="pipe" class="on">Pipeline</button>
+        <button data-tab="imp">Importar</button>
+      </nav>
+      <span class="spacer"></span>
+      <button class="ghost" id="btnSettings" title="Ajustes">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
+      <span class="user"><span class="user-mail" id="uMail"></span> <button class="ghost sm" id="btnLogout">Salir</button></span>
+    </div>
+  </header>
+
+  <!-- Pipeline -->
+  <main class="wrap" id="vPipe">
+    <div class="chips" id="chips"></div>
+    <div class="toolbar">
+      <input type="search" id="pq" placeholder="Buscar nombre, teléfono, zona…">
+      <span class="spacer"></span>
+      <button id="btnExport" class="sm">Exportar CSV</button>
+      <button id="btnNew" class="primary sm">+ Nuevo lead</button>
+    </div>
+    <div class="card">
+      <table class="resp">
+        <thead><tr><th>Complejo</th><th>Teléfono</th><th>Estado</th><th>Último contacto</th><th>Próxima acción</th></tr></thead>
+        <tbody id="tbPipe" class="click"></tbody>
+      </table>
+    </div>
+    <p class="hint" id="pipeHint"></p>
+  </main>
+
+  <!-- Import -->
+  <main class="wrap" id="vImp" hidden>
+    <input type="file" id="file" accept=".csv,.tsv,.txt,text/csv,text/plain" multiple hidden>
+    <div id="drop" class="drop" tabindex="0" role="button">
+      <strong>Arrastrá el CSV o el .txt acá, o hacé clic para elegirlo</strong>
+      <span>Instagram, Google Maps, PhantomBuster (también lo copiado de la consola).</span>
+    </div>
+    <details class="panel" id="pastePanel">
+      <summary>Pegar texto en vez de subir archivo</summary>
+      <div class="panel-body">
+        <textarea id="pasteArea" rows="6" placeholder="Pegá acá el contenido"></textarea>
+        <div class="row" style="margin-top:8px"><button id="btnPaste" class="primary">Procesar texto</button></div>
+      </div>
+    </details>
+    <details class="panel">
+      <summary>Reglas de filtrado</summary>
+      <div class="panel-body settings-grid">
+        <div>
+          <strong style="font-size:14px">Rubros a descartar</strong>
+          <p class="hint" style="margin:2px 0 8px">Una palabra o frase por línea; sin importar tildes ni mayúsculas.</p>
+          <textarea id="kw" rows="8"></textarea>
+        </div>
+        <div>
+          <strong style="font-size:14px">Opciones</strong>
+          <label class="check"><input type="checkbox" id="optFijos"> Descartar los que solo tienen teléfono fijo</label>
+          <label class="check"><input type="checkbox" id="optUnconfirmed"> Descartar números sin confirmar como WhatsApp</label>
+        </div>
+      </div>
+    </details>
+    <div id="banners"></div>
+
+    <section id="impResults" hidden>
+      <div class="stats">
+        <div class="stat"><b id="iValid">0</b><span>Leads válidos</span></div>
+        <div class="stat"><b id="iNew">0</b><span>Nuevos para el CRM</span></div>
+        <div class="stat"><b id="iDup">0</b><span>Ya en el CRM o repetidos</span></div>
+        <div class="stat"><b id="iDisc">0</b><span>Descartados</span></div>
+      </div>
+      <div class="toolbar">
+        <button id="btnAdd" class="primary">Agregar al CRM</button>
+        <span class="spacer"></span>
+        <button id="btnClearImp" class="ghost">Vaciar</button>
+      </div>
+      <div class="card">
+        <table class="resp">
+          <thead><tr><th>Complejo</th><th>Teléfono</th><th>Web</th><th></th><th></th></tr></thead>
+          <tbody id="tbImp"></tbody>
+        </table>
+      </div>
+      <p class="hint">Hacé clic en el nombre para corregirlo. Los que ya están en el CRM (mismo teléfono) no se duplican.</p>
+      <h2>Descartados <span class="muted" id="cDisc"></span></h2>
+      <div class="card">
+        <table class="resp">
+          <thead><tr><th>Nombre</th><th>Motivo</th><th>Detalle</th><th></th></tr></thead>
+          <tbody id="tbDisc"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- Drawer -->
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" aria-hidden="true">
+  <div class="d-head">
+    <input id="dName" aria-label="Nombre del complejo">
+    <button class="ghost" id="dClose" title="Cerrar (Esc)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+  </div>
+  <div class="d-body" id="dBody"></div>
+</aside>
+
+<!-- New lead -->
+<dialog id="dlgNew">
+  <form method="dialog" id="newForm">
+    <h3>Nuevo lead</h3>
+    <label>Nombre del complejo<input id="nName" required></label>
+    <label>Teléfono / WhatsApp<input id="nPhone" inputmode="tel" placeholder="Ej: 260 15 451-3151"></label>
+    <label>Zona<input id="nLoc" placeholder="Ej: San Rafael"></label>
+    <div class="row" style="justify-content:flex-end"><button value="cancel" formnovalidate>Cancelar</button><button class="primary" value="ok">Crear</button></div>
+  </form>
+</dialog>
+
+<!-- Settings -->
+<dialog id="dlgSettings">
+  <form method="dialog">
+    <h3>Ajustes</h3>
+    <label>Mensaje inicial de WhatsApp
+      <textarea id="sTemplate" rows="5" placeholder="Hola! Soy Gabi de Loomi Suite. Vi {nombre} y quería contarte…"></textarea>
+    </label>
+    <p class="hint" style="margin-top:-6px">Se carga en el chat al tocar el botón de WhatsApp. <b>{nombre}</b> se reemplaza por el nombre del complejo. Dejalo vacío para abrir el chat sin texto.</p>
+    <div class="row" style="justify-content:flex-end"><button class="primary" value="ok">Listo</button></div>
+  </form>
+</dialog>
+
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+/* ===== Motor de filtrado (igual que filtro-leads.html) ===== */
+/* ---------- Config ---------- */
+const DEFAULT_KW = [
+  'carnicer','frigorific','carne de cerdo','carne vacuna','cortes de carne','porcin','reproductores',
+  'constructora','construccion de cabanas','construimos','llave en mano','steel frame','premoldead',
+  'aserradero','fabricamos','venta de cabanas','remate'
+].join('\n');
+
+const GENERIC_HOSTS = ['instagram.com','facebook.com','fb.com','fb.me','wa.me','whatsapp.com','wa.link','linktr.ee',
+  'linktree','tiktok.com','youtube.com','youtu.be','twitter.com','x.com','threads.net','booking.com','airbnb.',
+  'tripadvisor.','despegar.com','mercadolibre.','trivago.','google.','goo.gl','g.page','maps.app','alquilerargentina.com',
+  'phbuster.io','phantombuster','cdninstagram.com','fbcdn.net','bit.ly','beacons.ai','taplink','gmail.com',
+  'hotmail.com','yahoo.com','outlook.com','canva.site'];
+
+const PORTAL_MAIL = ['alquilerargentina.com','booking.com','airbnb.com','despegar.com','tripadvisor.com','hotelonia.com','phantombuster.com','sentry.io','wixpress.com','example.com'];
+
+const AREA3 =new Set(['220','221','223','230','236','237','249','260','261','263','264','266','280','291','294','297',
+  '298','299','341','342','343','345','348','351','353','358','362','364','370','376','379','380','381','383','385','387','388']);
+
+const HEAD = {
+  name: ['fullname','name','nombre','title','titulo','businessname','placename','nombredelcomplejo','razonsocial','nombrecomplejo'],
+  user: ['username','usuario','instagramusername','handle'],
+  phone: ['phone','phonenumber','phones','telefono','tel','celular','whatsapp','phoneunformatted','internationalphonenumber','telefonowhatsapp'],
+  web: ['website','web','sitioweb','paginaweb','externalurl','domain','sitio','websiteurl'],
+  text: ['description','descripcion','bio','biography','caption','text','about','category','categoryname','categoria','subtitle','categories'],
+  email: ['email','emails','correo','mail','publicemail'],
+  profile: ['profileurl','instagramurl'],
+  post: ['posturl','url','placeurl','googlemapsurl'],
+  location: ['location','address','direccion','ubicacion','city','ciudad','fulladdress','street']
+};
+
+/* ---------- Utils ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fold = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+const normHead = s => fold(s).replace(/[^a-z0-9]/g, '');
+
+function store(k, v){ try{ localStorage.setItem('filtroLeads.' + k, JSON.stringify(v)); }catch(e){} }
+function load(k, d){ try{ const v = localStorage.getItem('filtroLeads.' + k); return v == null ? d : JSON.parse(v); }catch(e){ return d; } }
+
+let toastT;
+function toast(msg){ const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2400); }
+
+/* Fixes double-encoded UTF-8 ("CabaÃ±as" -> "Cabañas") */
+const CP1252 = {0x20AC:0x80,0x201A:0x82,0x0192:0x83,0x201E:0x84,0x2026:0x85,0x2020:0x86,0x2021:0x87,0x02C6:0x88,0x2030:0x89,
+  0x0160:0x8A,0x2039:0x8B,0x0152:0x8C,0x017D:0x8E,0x2018:0x91,0x2019:0x92,0x201C:0x93,0x201D:0x94,0x2022:0x95,0x2013:0x96,
+  0x2014:0x97,0x02DC:0x98,0x2122:0x99,0x0161:0x9A,0x203A:0x9B,0x0153:0x9C,0x017E:0x9E,0x0178:0x9F};
+const MOJI_RUN = /[\u0080-ÿŒœŠšŸŽžƒˆ˜–—‘-‚“-„†-•…‰‹›€™]{2,}/g;
+const utf8 = new TextDecoder('utf-8', {fatal: true});
+function fixMojibake(s){
+  if (!s || !/[ÃÂâð][\u0080-¿Œ-™]/.test(s)) return s;
+  for (let pass = 0; pass < 3; pass++){
+    let changed = false;
+    s = s.replace(MOJI_RUN, run => {
+      const bytes = [];
+      for (const ch of run){ const c = ch.codePointAt(0); bytes.push(c < 0x100 ? c : CP1252[c]); }
+      try{ const out = utf8.decode(new Uint8Array(bytes)); if (out !== run){ changed = true; return out; } }catch(e){}
+      return run;
+    });
+    if (!changed) break;
+  }
+  return s;
+}
+
+/* ---------- CSV ---------- */
+function parseCSV(text){
+  text = text.replace(/^﻿/, '');
+  const nl = text.indexOf('\n');
+  const first = nl === -1 ? text : text.slice(0, nl);
+  const counts = {',':0, ';':0, '\t':0}; let q = false;
+  for (const ch of first){ if (ch === '"') q = !q; else if (!q && ch in counts) counts[ch]++; }
+  let delim = ','; let best = 0;
+  for (const [k, v] of Object.entries(counts)) if (v > best){ best = v; delim = k; }
+
+  const rows = []; let row = [], field = '', inQ = false;
+  for (let i = 0; i < text.length; i++){
+    const c = text[i];
+    if (inQ){
+      if (c === '"'){ if (text[i+1] === '"'){ field += '"'; i++; } else inQ = false; }
+      else field += c;
+      continue;
+    }
+    if (c === '"' && field === ''){ inQ = true; continue; }
+    if (c === delim){ row.push(field); field = ''; continue; }
+    if (c === '\r') continue;
+    if (c === '\n'){ row.push(field); rows.push(row); row = []; field = ''; continue; }
+    field += c;
+  }
+  if (field !== '' || row.length){ row.push(field); rows.push(row); }
+  return rows;
+}
+
+/* ---------- Phones (Argentina) ---------- */
+function areaLen(d){ if (d.startsWith('11')) return 2; if (AREA3.has(d.slice(0, 3))) return 3; return 4; }
+
+function normAR(raw){
+  let plus = /^\s*\+/.test(raw);
+  let d = String(raw).replace(/\D/g, '');
+  let mobile = false;
+  if (d.startsWith('00')){ d = d.slice(2); plus = true; }
+  if (d.startsWith('54') && (plus || d.length >= 12)){
+    d = d.slice(2);
+    if (d.startsWith('9')){ d = d.slice(1); mobile = true; }
+  }
+  if (d.startsWith('0')) d = d.slice(1);
+  if (d.length === 10 && d.startsWith('15')){ d = '11' + d.slice(2); mobile = true; }
+  if (d.length === 12){
+    const a = areaLen(d);
+    if (d.substr(a, 2) === '15'){ d = d.slice(0, a) + d.slice(a + 2); mobile = true; }
+  }
+  const ok = d.length === 10 && /^(11|2|3)/.test(d);
+  return {ok, nsn: d, mobile};
+}
+
+const WA_CTX = /(whats|wsp|wpp|wapp|\bwa\b|\bcel\b|celu|celular|m[oó]vil|📲|📱)/iu;
+const FIJO_CTX = /(fijo|l[ií]nea fija|☎)/iu;
+const HINT_CTX = /(tel|whats|wsp|wpp|cel|llam|reserv|consult|contact|info|escrib|📞|📲|📱|☎)/iu;
+const RANK = {wa: 3, intl: 2, unk: 2, fijo: 1};
+
+function extractPhones(text, fromColumn){
+  const phones = [], incomplete = [];
+  if (!text) return {phones, incomplete};
+  const t = String(text).normalize('NFKC');
+  const push = (nsn, kind, raw) => {
+    const ex = phones.find(p => p.nsn === nsn);
+    if (ex){ if (RANK[kind] > RANK[ex.kind]) ex.kind = kind; return; }
+    phones.push({nsn, kind, raw});
+  };
+  for (const m of t.matchAll(/(?:wa\.me\/|whatsapp\.com\/send\/?\?phone=)\+?(\d{8,15})/gi)){
+    const n = normAR('+' + m[1]); if (n.ok) push(n.nsn, 'wa', m[0]);
+  }
+  const re = /\+?\(?\d[\d \t \-().]{5,22}\d/g;
+  for (const m of t.matchAll(re)){
+    const i = m.index, raw = m[0];
+    const prev = t[i - 1] || ' ';
+    if (/[\p{L}_@#=&%$\d]/u.test(prev)) continue;
+    const tokStart = t.slice(0, i).search(/\S*$/);
+    const token = t.slice(tokStart, i);
+    if (/(https?:|www\.|\.[a-z]{2,}\/|[a-z]\/|=)/i.test(token)) continue;
+    const ls = t.lastIndexOf('\n', i - 1) + 1;
+    let before = t.slice(ls, i);
+    if (!before.trim() && ls > 0){ const pls = t.lastIndexOf('\n', ls - 2) + 1; before = t.slice(pls, ls); }
+    before = before.slice(-80);
+    if (/\$\s*$/.test(before)) continue;
+    const n = normAR(raw);
+    const digits = raw.replace(/\D/g, '');
+    if (n.ok){
+      let kind = 'unk';
+      if (n.mobile || WA_CTX.test(before)) kind = 'wa';
+      else if (FIJO_CTX.test(before)) kind = 'fijo';
+      push(n.nsn, kind, raw.trim());
+    } else if (/^\s*\+/.test(raw) && !digits.startsWith('54') && digits.length >= 9 && digits.length <= 15){
+      push(digits, 'intl', raw.trim());
+    } else if (digits.length >= 7 && digits.length <= 9 && (fromColumn || HINT_CTX.test(before))){
+      incomplete.push(raw.trim());
+    }
+  }
+  return {phones, incomplete};
+}
+const fmtPhone = p => p.kind === 'intl' ? '+' + p.nsn : (p.kind === 'fijo' ? '+54' : '+549') + p.nsn;
+
+/* ---------- Webs ---------- */
+const URL_RE = /(?:https?:\/\/)?(?:www\.)?[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)*\.(?:com\.ar|net\.ar|org\.ar|tur\.ar|gob\.ar|com|net|org|ar|info|travel|site|online|store|tur|uy|cl|app|io)(?![a-z0-9-])(?:\/[^\s"'<>)\]]*)?/gi;
+function toWeb(u){
+  if (!/^https?:\/\//i.test(u)) u = 'https://' + u;
+  let host;
+  try{ host = new URL(u).hostname.toLowerCase(); }catch(e){ return null; }
+  if (!host.includes('.') || GENERIC_HOSTS.some(g => host.includes(g))) return null;
+  return {key: host.replace(/^www\./, ''), url: 'https://' + host};
+}
+function extractWebs(text, fromColumn){
+  const out = [];
+  if (!text) return out;
+  const t = String(text).normalize('NFKC');
+  if (fromColumn && !/\s/.test(t.trim()) && /\./.test(t)){ const w = toWeb(t.trim()); if (w) out.push(w); return out; }
+  for (const m of t.matchAll(URL_RE)){
+    const prev = t[m.index - 1] || ' ';
+    if (/[@\w.\-\/#]/.test(prev)) continue;
+    const w = toWeb(m[0]); if (w && !out.some(o => o.key === w.key)) out.push(w);
+  }
+  return out;
+}
+
+/* ---------- Names ---------- */
+const LODGE_RE = /(caba[nñ]a|complejo|hoster[ií]a|posada|apart|departament|bungalow|lodge|hotel|chalet|domo|glamping|quinta|estancia|granja|refugio|camping|d[uú]plex|alojamiento|hospedaje|casa|villa|resort|loft|rancho|chacra|cottage)/i;
+const NAME_IN_TEXT = /(?<![#@\p{L}])(Caba[ñn]as?|Complejo|Hoster[ií]a|Posada|Apart(?:\s?[Hh]otel)?|Bungalows?|Lodge|Chalets?|Domos|Glamping|Estancia|Refugio|Hospedaje|Departamentos)\s+((?:(?:de|del|la|las|los|el|y)\s+)*["“]?[A-ZÁÉÍÓÚÑ][^\s,.;:!?¡¿"”()\n]*["”]?(?:\s+(?:(?:de|del|la|las|los|el|y)\s+)*["“]?[A-ZÁÉÍÓÚÑ][^\s,.;:!?¡¿"”()\n]*["”]?){0,3})/u;
+const SMALL = new Set(['de','del','y','e','en']);
+
+function cleanName(s){
+  s = String(s || '').replace(/\p{Extended_Pictographic}|️|‍/gu, '').replace(/#\S+/g, '')
+    .replace(/\s+/g, ' ').trim().replace(/^[@\-–|·,.:\s]+|[\-–|·,:\s]+$/g, '');
+  const noLower = !/\p{Ll}/u.test(s) && /\p{Lu}/u.test(s), noUpper = !/\p{Lu}/u.test(s) && /\s/.test(s);
+  if (s.length > 3 && (noLower || noUpper)){
+    s = s.toLowerCase().split(' ').map((w, i) => (i && SMALL.has(w)) ? w : w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+  }
+  return s;
+}
+function pickName(fullName, user, text){
+  let name = cleanName(fullName);
+  const looksHandle = !name || /^@/.test(String(fullName).trim()) || (!/\s/.test(name) && name === name.toLowerCase());
+  if (looksHandle || !LODGE_RE.test(name)){
+    const m = String(text || '').normalize('NFKC').match(NAME_IN_TEXT);
+    if (m) return cleanName(m[1] + ' ' + m[2].replace(/\s+(de|del|la|las|los|el|y)$/i, ''));
+  }
+  return name || (user ? '@' + user : '');
+}
+
+
+/* ---------- Processing ---------- */
+function mapHeader(row){
+  const map = {}; let hits = 0;
+  row.forEach((h, i) => {
+    const n = normHead(h);
+    for (const [key, list] of Object.entries(HEAD)){
+      if (list.includes(n)){ (map[key] ||= []).push(i); hits++; break; }
+    }
+  });
+  return hits >= 2 ? map : null;
+}
+
+function ingest(text){
+  const rows = parseCSV(text).map(r => r.map(c => fixMojibake(c)));
+  if (!rows.length) return 0;
+  let head = mapHeader(rows[0]);
+  let body = head ? rows.slice(1) : rows;
+  // PhantomBuster Google Maps rows copied from the browser console (no header row)
+  if (!head && rows[0].length >= 10 && /google\.[a-z.]+\/maps/i.test(rows[0][1] || '') && /data found|website found/i.test(rows[0][3] || '')){
+    head = {name: [0], post: [1], web: [2], text: [7, 10], location: [8], phone: [9], email: [11], profile: [13]};
+  }
+  const isIG = !!head && (head.user || rows[0].some(h => /posturl|ownerid|profileurl/i.test(h)));
+  const get = (r, key) => (head && head[key] ? head[key].map(i => r[i] || '').filter(Boolean) : []);
+  let added = 0;
+
+  for (const r of body){
+    const joined = r.join(' ');
+    if (!joined.trim()) continue;
+    if (/export limit reached|phbuster\.io\/upgrade|upgrade to export/i.test(joined)){ truncated = true; continue; }
+
+    let rec;
+    if (head){
+      rec = {
+        fullName: get(r, 'name')[0] || '',
+        user: (get(r, 'user')[0] || '').replace(/^@/, '').trim(),
+        phoneCols: get(r, 'phone'),
+        webCols: get(r, 'web'),
+        text: get(r, 'text').join('\n'),
+        profile: get(r, 'profile')[0] || '',
+        post: get(r, 'post')[0] || '',
+        location: get(r, 'location')[0] || ''
+      };
+      if (!rec.profile && isIG && rec.user) rec.profile = 'https://www.instagram.com/' + rec.user;
+      if (!rec.user && /instagram\.com\/([\w.]+)/i.test(rec.profile)) rec.user = rec.profile.match(/instagram\.com\/([\w.]+)/i)[1];
+      if (rec.profile && !/instagram\.com/i.test(rec.profile)) rec.profile = '';
+      rec.emails = get(r, 'email');
+    } else {
+      const nameField = r.find(f => /\p{L}/u.test(f) && !/^https?:/i.test(f.trim())) || '';
+      rec = {fullName: nameField, user: '', phoneCols: [], webCols: r.filter(f => /^https?:\/\//i.test(f.trim())),
+             text: r.join('\n'), profile: '', post: '', location: '', emails: []};
+    }
+    if (!rec.fullName && !rec.user && !rec.text) continue;
+
+    const ph = extractPhones(rec.text, false);
+    for (const c of rec.phoneCols){
+      const p2 = extractPhones(c, true);
+      p2.phones.forEach(p => { if (!ph.phones.some(x => x.nsn === p.nsn)) ph.phones.push(p); });
+      ph.incomplete.push(...p2.incomplete);
+    }
+    const webs = [...rec.webCols.flatMap(w => extractWebs(w, true)), ...extractWebs(rec.text, false)];
+    const name = pickName(rec.fullName, rec.user, rec.text);
+    const key = rec.user ? 'u:' + rec.user.toLowerCase() : 'n:' + fold(name);
+
+    let e = entries.find(x => x.key === key);
+    if (!e){
+      e = {id: 'e' + Math.random().toString(36).slice(2, 9), key, name, user: rec.user, profile: rec.profile,
+           location: rec.location, posts: [], phones: [], webs: [], emails: [], incomplete: [], text: '', override: null,
+           phoneEdit: null, webEdit: null};
+      entries.push(e); added++;
+    } else if (!LODGE_RE.test(e.name) && LODGE_RE.test(name)) e.name = name;
+    if (rec.post) e.posts.push(rec.post);
+    if (!e.location && rec.location) e.location = rec.location;
+    e.text += '\n' + [rec.fullName, rec.user, rec.text].join(' ');
+    for (const p of ph.phones){
+      const ex = e.phones.find(x => x.nsn === p.nsn);
+      if (ex){ if (RANK[p.kind] > RANK[ex.kind]) ex.kind = p.kind; } else e.phones.push(p);
+    }
+    for (const w of webs) if (!e.webs.some(x => x.key === w.key)) e.webs.push(w);
+    for (const m of [...rec.emails, rec.text].join(' ').matchAll(/[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g)){
+      const em = m[0].toLowerCase().replace(/\.$/, '');
+      if (!PORTAL_MAIL.some(d => em.endsWith('@' + d) || em.includes('.' + d)) && !e.emails.includes(em)) e.emails.push(em);
+    }
+    e.incomplete.push(...ph.incomplete.filter(x => !e.incomplete.includes(x)));
+  }
+  return added;
+}
+
+function keywords(){ return settings.kw.split('\n').map(k => fold(k).trim()).filter(Boolean); }
+
+function classify(e){
+  if (e.override === 'keep') return {ok: true};
+  if (e.override === 'drop') return {ok: false, reason: 'Descartado a mano', detail: ''};
+  const hay = fold(e.text).replace(/[#\s]+/g, ' ');
+  const hit = keywords().find(k => hay.includes(k));
+  if (hit) return {ok: false, reason: 'Rubro excluido', detail: 'Coincide con “' + hit + '”'};
+  if (e.phoneEdit != null) return e.phoneEdit.trim() ? {ok: true} : {ok: false, reason: 'Sin teléfono', detail: ''};
+  if (!e.phones.length){
+    const d = e.incomplete.length ? 'Número sin código de área: ' + e.incomplete[0]
+      : (e.posts.some(u => /google\./.test(u)) ? 'La ficha de Maps no tiene teléfono' : 'No figura en el texto; puede estar en la bio');
+    return {ok: false, reason: 'Sin teléfono', detail: d};
+  }
+  if (settings.fijos && e.phones.every(p => p.kind === 'fijo')) return {ok: false, reason: 'Solo fijo', detail: e.phones.map(fmtPhone).join(' / ')};
+  if (settings.unconfirmed && !e.phones.some(p => p.kind === 'wa')) return {ok: false, reason: 'WhatsApp sin confirmar', detail: e.phones.map(fmtPhone).join(' / ')};
+  return {ok: true};
+}
+
+const phoneText = e => e.phoneEdit != null ? e.phoneEdit.trim() : e.phones.map(fmtPhone).join(' / ');
+const webText = e => e.webEdit != null ? e.webEdit.trim() : (e.webs[0] ? e.webs[0].url.replace(/^https:\/\//, '') : '');
+
+
+/* ========== CRM ========== */
+const SB_URL = 'https://vnfgitgadadjjjciftsa.supabase.co';
+const SB_KEY = 'sb_publishable_IKbP0ieyJfrtdguY39N7wg_RMjN_CxH';
+
+const STATUSES = [['nuevo','Nuevo'],['contactado','Contactado'],['sin_respuesta','Sin respuesta'],['interesado','Interesado'],['demo','Demo agendada'],['cliente','Cliente'],['perdido','Perdido']];
+const ST = Object.fromEntries(STATUSES);
+const CLOSED = new Set(['cliente','perdido']);
+const KINDS = [['llamada','Llamada','📞'],['whatsapp','WhatsApp','💬'],['email','Email','✉️'],['visita','Visita','📍'],['nota','Nota','📝']];
+const KIND = Object.fromEntries(KINDS.map(k => [k[0], k]));
+const KIND_LABEL = {wa: 'WhatsApp ✓', unk: 'A confirmar', fijo: 'Fijo', intl: 'Extranjero'};
+
+const ICON = {
+  wa: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 21l2.1-5.5A8.4 8.4 0 1 1 21 11.5z"/></svg>',
+  tel: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg>',
+  ext: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14 21 3"/></svg>',
+  x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>'
+};
+
+let sb = null, user = null;
+const settings = {
+  kw: load('kw', DEFAULT_KW),
+  fijos: load('fijos', false),
+  unconfirmed: load('unconfirmed', false),
+  template: load('template', '')
+};
+const crm = {leads: [], filter: 'activos', q: '', openId: null, notes: {}, composeKind: 'llamada', loadedAt: 0};
+let entries = [];      // import buffer (used by the filter engine)
+let truncated = false;
+
+/* ---------- Dates ---------- */
+const isoLocal = d => { const x = new Date(d); x.setMinutes(x.getMinutes() - x.getTimezoneOffset()); return x.toISOString().slice(0, 10); };
+const todayISO = () => isoLocal(new Date());
+const addDaysISO = n => { const d = new Date(); d.setDate(d.getDate() + n); return isoLocal(d); };
+const DOW = ['dom','lun','mar','mié','jue','vie','sáb'];
+const MON = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+function fmtDay(iso){
+  if (!iso) return '';
+  const t = todayISO();
+  if (iso === t) return 'Hoy';
+  if (iso === addDaysISO(1)) return 'Mañana';
+  if (iso === addDaysISO(-1)) return 'Ayer';
+  const [y, m, d] = iso.split('-').map(Number);
+  const dt = new Date(y, m - 1, d);
+  return `${DOW[dt.getDay()]} ${d} ${MON[m - 1]}` + (y !== new Date().getFullYear() ? ' ' + y : '');
+}
+function relTime(ts){
+  if (!ts) return '';
+  const s = (Date.now() - new Date(ts).getTime()) / 1000;
+  if (s < 60) return 'recién';
+  if (s < 3600) return `hace ${Math.round(s / 60)} min`;
+  const day = isoLocal(new Date(ts));
+  if (day === todayISO()) return `hoy ${new Date(ts).toLocaleTimeString('es-AR', {hour: '2-digit', minute: '2-digit'})}`;
+  if (day === addDaysISO(-1)) return 'ayer';
+  const days = Math.round(s / 86400);
+  if (days < 14) return `hace ${days} días`;
+  return fmtDay(day);
+}
+const fmtStamp = ts => { const d = new Date(ts); return `${fmtDay(isoLocal(d))}, ${d.toLocaleTimeString('es-AR', {hour: '2-digit', minute: '2-digit'})}`; };
+function dueClass(iso, status){
+  if (!iso || CLOSED.has(status)) return '';
+  const t = todayISO();
+  return iso < t ? 'overdue' : iso === t ? 'today' : '';
+}
+
+/* ---------- Phones helpers ---------- */
+const digitsOf = s => String(s || '').replace(/\D/g, '');
+function parsePhonesText(text, prev = []){
+  return String(text || '').split(/[\/,;]| y /).map(s => s.trim()).filter(Boolean).map(s => {
+    const n = normAR(s);
+    let p;
+    if (n.ok){
+      const isFijo = /^\s*\+?\s*54\s*[^9\s]/.test(s) && !n.mobile && prev.some(x => x.k === 'fijo' && digitsOf(x.n).endsWith(n.nsn));
+      p = {n: (isFijo ? '+54' : '+549') + n.nsn, k: n.mobile ? 'wa' : 'unk'};
+    } else if (/^\s*\+/.test(s) && !digitsOf(s).startsWith('54') && digitsOf(s).length >= 9){
+      p = {n: '+' + digitsOf(s), k: 'intl'};
+    } else p = {n: s, k: 'unk'};
+    const old = prev.find(x => digitsOf(x.n) === digitsOf(p.n));
+    if (old) p.k = old.k;
+    return p;
+  });
+}
+const phonesToText = arr => (arr || []).map(p => p.n).join(' / ');
+function waLink(p, lead){
+  let url = 'https://wa.me/' + digitsOf(p.n);
+  const t = (settings.template || '').trim();
+  if (t) url += '?text=' + encodeURIComponent(t.replace(/\{nombre\}/gi, lead.name || ''));
+  return url;
+}
+const cleanLocation = s => String(s || '').replace(/,?\s*(Mendoza,\s*)?Argentina$/i, '').replace(/\s*\bM\d{4}[A-Z]{0,3}\b/, '').replace(/,\s*,/g, ',').replace(/^[,\s]+|[,\s]+$/g, '');
+
+/* ---------- Data layer ---------- */
+async function loadLeads(){
+  let all = [], from = 0;
+  for (;;){
+    const {data, error} = await sb.from('crm_leads').select('*').order('created_at', {ascending: true}).range(from, from + 999);
+    if (error) throw error;
+    all = all.concat(data || []);
+    if (!data || data.length < 1000) break;
+    from += 1000;
+  }
+  crm.leads = all;
+  crm.loadedAt = Date.now();
+}
+async function updateLead(id, patch){
+  const lead = crm.leads.find(l => l.id === id); if (!lead) return;
+  const backup = {...lead};
+  Object.assign(lead, patch);
+  renderPipe(); if (crm.openId === id) renderDrawerHeader();
+  const {data, error} = await sb.from('crm_leads').update(patch).eq('id', id).select().single();
+  if (error){ Object.assign(lead, backup); renderPipe(); toast('No se pudo guardar: ' + error.message); return false; }
+  Object.assign(lead, data);
+  return true;
+}
+async function loadNotes(id){
+  const {data, error} = await sb.from('crm_notes').select('*').eq('lead_id', id).order('created_at', {ascending: false});
+  if (error){ toast('No se pudieron cargar las notas'); return; }
+  crm.notes[id] = data || [];
+}
+async function addNote(lead, kind, body, extraPatch = {}){
+  const {data, error} = await sb.from('crm_notes').insert({lead_id: lead.id, kind, body}).select().single();
+  if (error){ toast('No se pudo guardar la nota: ' + error.message); return false; }
+  (crm.notes[lead.id] ||= []).unshift(data);
+  const patch = {...extraPatch};
+  if (kind !== 'nota'){
+    patch.last_contact_at = data.created_at;
+    if (lead.status === 'nuevo' && !patch.status) patch.status = 'contactado';
+  }
+  if (Object.keys(patch).length) await updateLead(lead.id, patch);
+  return true;
+}
+
+/* ---------- Auth ---------- */
+function show(view){
+  $('#vBoot').hidden = view !== 'boot';
+  $('#vLogin').hidden = view !== 'login';
+  $('#vApp').hidden = view !== 'app';
+}
+function showLogin(msg){ show('login'); $('#lErr').textContent = msg || ''; $('#lBtn').disabled = false; }
+async function enter(session){
+  const {data: ok, error} = await sb.rpc('crm_is_admin');
+  if (error || !ok){ await sb.auth.signOut(); showLogin(error ? 'No se pudo verificar el acceso: ' + error.message : 'Esta cuenta no tiene acceso al CRM.'); return; }
+  user = session.user;
+  $('#uMail').textContent = user.email || '';
+  show('app');
+  $('#tbPipe').innerHTML = '<tr><td colspan="5" class="empty-state">Cargando leads…</td></tr>';
+  try{ await loadLeads(); }catch(e){ toast('Error cargando leads: ' + e.message); }
+  renderPipe();
+}
+async function boot(){
+  if (!window.supabase){ show('login'); $('#lErr').textContent = 'No se pudo cargar Supabase. Revisá la conexión y recargá.'; $('#lBtn').disabled = true; return; }
+  sb = window.supabase.createClient(SB_URL, SB_KEY, {auth: {persistSession: true, autoRefreshToken: true}});
+  const {data: {session}} = await sb.auth.getSession();
+  if (session) await enter(session); else showLogin();
+}
+$('#loginForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  $('#lBtn').disabled = true; $('#lErr').textContent = '';
+  const {data, error} = await sb.auth.signInWithPassword({email: $('#lEmail').value.trim(), password: $('#lPass').value});
+  if (error){ showLogin(/invalid/i.test(error.message) ? 'Email o contraseña incorrectos.' : error.message); return; }
+  $('#lPass').value = '';
+  await enter(data.session);
+});
+$('#btnLogout').addEventListener('click', async () => { await sb.auth.signOut(); crm.leads = []; closeDrawer(); showLogin(); });
+
+/* ---------- Tabs ---------- */
+function setTab(t){
+  document.querySelectorAll('.tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === t));
+  $('#vPipe').hidden = t !== 'pipe';
+  $('#vImp').hidden = t !== 'imp';
+  if (t === 'imp') renderImport(); else renderPipe();
+}
+document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => setTab(b.dataset.tab)));
+
+/* ---------- Pipeline ---------- */
+function filterLeads(){
+  const t = todayISO(), q = fold(crm.q).trim(), qd = digitsOf(crm.q);
+  return crm.leads.filter(l => {
+    if (crm.filter === 'hoy'){ if (!l.next_action_at || l.next_action_at > t || CLOSED.has(l.status)) return false; }
+    else if (crm.filter === 'activos'){ if (CLOSED.has(l.status)) return false; }
+    else if (crm.filter !== 'todos' && l.status !== crm.filter) return false;
+    if (q){
+      const hay = fold([l.name, l.location, l.web, l.email, l.instagram, l.next_action].join(' '));
+      if (!hay.includes(q) && !(qd.length >= 4 && (l.phones || []).some(p => digitsOf(p.n).includes(qd)))) return false;
+    }
+    return true;
+  }).sort((a, b) => {
+    const da = a.next_action_at || '9999', db = b.next_action_at || '9999';
+    if (da !== db) return da < db ? -1 : 1;
+    return (a.name || '').localeCompare(b.name || '', 'es');
+  });
+}
+function renderChips(){
+  const t = todayISO();
+  const count = f => crm.leads.filter(l => f(l)).length;
+  const chips = [
+    ['hoy', 'Para hoy', count(l => l.next_action_at && l.next_action_at <= t && !CLOSED.has(l.status)), true],
+    ['activos', 'Activos', count(l => !CLOSED.has(l.status))],
+    ...STATUSES.map(([k, v]) => [k, v, count(l => l.status === k)]),
+    ['todos', 'Todos', crm.leads.length]
+  ];
+  $('#chips').innerHTML = chips.map(([k, label, n, hot]) =>
+    `<button class="chip ${crm.filter === k ? 'on' : ''} ${hot && n ? 'hot' : ''}" data-filter="${k}">${label}<b>${n}</b></button>`).join('');
+}
+function phoneMini(l){
+  const ps = l.phones || [];
+  if (!ps.length) return '<span class="muted">—</span>';
+  const p = ps[0];
+  return `<div class="phone"><span class="num">${esc(p.n)}</span>` +
+    (p.k !== 'fijo' ? `<a class="ic" href="${esc(waLink(p, l))}" target="_blank" rel="noopener" title="WhatsApp" data-stop>${ICON.wa}</a>` : '') +
+    `<a class="ic" href="tel:${esc(p.n)}" title="Llamar" data-stop>${ICON.tel}</a>` +
+    (ps.length > 1 ? `<span class="tag muted">+${ps.length - 1}</span>` : '') + `</div>`;
+}
+function renderPipe(){
+  if ($('#vApp').hidden) return;
+  renderChips();
+  const list = filterLeads();
+  const empty = !crm.leads.length
+    ? 'Todavía no hay leads. Andá a <b>Importar</b> para cargar un CSV, o creá uno con <b>+ Nuevo lead</b>.'
+    : crm.filter === 'hoy' ? 'No hay nada pendiente para hoy. 🎉' : 'No hay leads en esta vista.';
+  $('#tbPipe').innerHTML = list.length ? list.map(l => {
+    const dc = dueClass(l.next_action_at, l.status);
+    return `<tr data-id="${l.id}" class="${crm.openId === l.id ? 'sel' : ''}">
+      <td><div class="name">${esc(l.name)}</div>${l.location ? `<div class="meta">${esc(l.location)}</div>` : ''}</td>
+      <td>${phoneMini(l)}</td>
+      <td><span class="st st-${l.status}">${ST[l.status] || l.status}</span></td>
+      <td class="${l.last_contact_at ? '' : 'hide-m'}" data-l="Último contacto:">${l.last_contact_at ? esc(relTime(l.last_contact_at)) : '<span class="muted">—</span>'}</td>
+      <td class="${l.next_action_at || l.next_action ? '' : 'hide-m'}" data-l="Próxima:">${l.next_action_at ? `<span class="${dc}">${esc(fmtDay(l.next_action_at))}</span> ` : ''}${l.next_action ? `<span class="muted">${esc(l.next_action)}</span>` : (l.next_action_at ? '' : '<span class="muted">—</span>')}</td>
+    </tr>`;
+  }).join('') : `<tr><td colspan="5" class="empty-state">${empty}</td></tr>`;
+  $('#pipeHint').textContent = list.length ? `${list.length} lead${list.length === 1 ? '' : 's'} en esta vista.` : '';
+}
+$('#chips').addEventListener('click', e => { const b = e.target.closest('[data-filter]'); if (!b) return; crm.filter = b.dataset.filter; renderPipe(); });
+$('#pq').addEventListener('input', e => { crm.q = e.target.value; renderPipe(); });
+$('#tbPipe').addEventListener('click', e => {
+  if (e.target.closest('[data-stop]')) return;
+  const tr = e.target.closest('tr[data-id]'); if (tr) openDrawer(tr.dataset.id);
+});
+
+/* ---------- Drawer ---------- */
+function curLead(){ return crm.leads.find(l => l.id === crm.openId); }
+async function openDrawer(id){
+  crm.openId = id;
+  const l = curLead(); if (!l) return;
+  $('#drawer').classList.add('on'); $('#scrim').classList.add('on'); $('#drawer').setAttribute('aria-hidden', 'false');
+  renderPipe();
+  renderDrawer();
+  if (!crm.notes[id]){ await loadNotes(id); if (crm.openId === id) renderDrawer(); }
+}
+function closeDrawer(){
+  crm.openId = null;
+  $('#drawer').classList.remove('on'); $('#scrim').classList.remove('on'); $('#drawer').setAttribute('aria-hidden', 'true');
+  renderPipe();
+}
+$('#dClose').addEventListener('click', closeDrawer);
+$('#scrim').addEventListener('click', closeDrawer);
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && crm.openId && !document.querySelector('dialog[open]')) closeDrawer(); });
+
+function renderDrawerHeader(){
+  const l = curLead(); if (!l) return;
+  if (document.activeElement !== $('#dName')) $('#dName').value = l.name || '';
+  const sel = $('#dStatus'); if (sel && document.activeElement !== sel) sel.value = l.status;
+}
+function renderDrawer(){
+  const l = curLead(); if (!l) return;
+  renderDrawerHeader();
+  const notes = crm.notes[l.id];
+  const src = l.source_url ? `<a href="${esc(l.source_url)}" target="_blank" rel="noopener">${/google\./.test(l.source_url) ? 'ver en Maps' : 'ver post'}</a>` : '';
+  const ig = l.instagram ? `<a href="${esc(l.instagram)}" target="_blank" rel="noopener">@${esc((l.instagram.match(/instagram\.com\/([\w.]+)/i) || [, l.instagram])[1])}</a>` : '';
+  const meta = [l.location ? esc(l.location) : '', ig, src].filter(Boolean).join(' · ');
+  const webHref = l.web ? (/^https?:/.test(l.web) ? l.web : 'https://' + l.web) : '';
+
+  $('#dBody').innerHTML = `
+    ${meta ? `<div class="meta" style="margin-top:-2px">${meta}</div>` : ''}
+
+    <div class="d-sec">
+      ${(l.phones || []).map(p => `
+        <div class="contact-row">
+          <span class="num">${esc(p.n)}</span><span class="tag ${p.k}">${KIND_LABEL[p.k] || ''}</span>
+          <span class="spacer"></span>
+          ${p.k !== 'fijo' ? `<a class="btn sm primary" href="${esc(waLink(p, l))}" target="_blank" rel="noopener" data-act="openwa">${ICON.wa} WhatsApp</a>` : ''}
+          <a class="btn sm" href="tel:${esc(p.n)}" data-act="opencall">${ICON.tel} Llamar</a>
+        </div>`).join('') || '<p class="muted" style="margin:0">Sin teléfono cargado.</p>'}
+      ${(l.web || l.email) ? `<div class="contact-row" style="margin-top:8px">
+        ${l.web ? `<a class="btn sm" href="${esc(webHref)}" target="_blank" rel="noopener">${ICON.ext} ${esc(l.web.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, ''))}</a>` : ''}
+        ${l.email ? `<a class="btn sm" href="mailto:${esc(l.email)}">✉️ ${esc(l.email)}</a>` : ''}
+      </div>` : ''}
+    </div>
+
+    <div class="d-sec grid2">
+      <label>Estado
+        <select id="dStatus">${STATUSES.map(([k, v]) => `<option value="${k}" ${l.status === k ? 'selected' : ''}>${v}</option>`).join('')}</select>
+      </label>
+      <label>Próxima acción
+        <input type="date" id="dNextDate" value="${esc(l.next_action_at || '')}">
+      </label>
+      <label style="grid-column:1/-1">Qué hay que hacer
+        <input id="dNextText" value="${esc(l.next_action || '')}" placeholder="Ej: volver a llamar, mandar demo…">
+      </label>
+    </div>
+    <div class="quick">
+      <button class="sm" data-next="1">Mañana</button>
+      <button class="sm" data-next="3">En 3 días</button>
+      <button class="sm" data-next="7">En 1 semana</button>
+      <button class="sm" data-next="30">En 1 mes</button>
+      ${l.next_action_at || l.next_action ? '<button class="sm ghost" data-next="clear">Quitar</button>' : ''}
+    </div>
+
+    <div class="d-sec">
+      <h3>Registrar contacto</h3>
+      <div class="seg" id="dKinds">${KINDS.map(([k, label, ic]) => `<button type="button" data-kind="${k}" class="${crm.composeKind === k ? 'on' : ''}">${ic} ${label}</button>`).join('')}</div>
+      <textarea id="dNote" rows="3" placeholder="Qué hablaron, cuántas unidades tiene, qué sistema usa, objeciones…"></textarea>
+      <div class="row" style="margin-top:8px">
+        <button class="primary sm" id="dSaveNote">Guardar</button>
+        <span class="spacer"></span>
+        <button class="sm" data-quick="noatendio">No atendió</button>
+        <button class="sm" data-quick="wasent">Le escribí por WhatsApp</button>
+      </div>
+      <p class="hint">Ctrl + Enter guarda. Registrar un contacto pasa a “Contactado” los leads nuevos.</p>
+    </div>
+
+    <div class="d-sec">
+      <h3>Historial</h3>
+      <div class="timeline">
+        ${notes == null ? '<p class="muted">Cargando…</p>' : notes.length ? notes.map(n => `
+          <div class="note">
+            <div class="k" title="${esc((KIND[n.kind] || [])[1] || '')}">${(KIND[n.kind] || [, , '📝'])[2]}</div>
+            <div><div class="when">${esc((KIND[n.kind] || [, 'Nota'])[1])} · ${esc(fmtStamp(n.created_at))}</div>${n.body ? `<div class="body">${esc(n.body)}</div>` : ''}</div>
+            <button class="ghost sm" data-delnote="${n.id}" title="Borrar nota">${ICON.x}</button>
+          </div>`).join('') : '<p class="muted" style="margin:0">Todavía no hay registros.</p>'}
+      </div>
+    </div>
+
+    <div class="d-sec">
+      <details class="more">
+        <summary>Editar datos de contacto</summary>
+        <div class="grid2" style="margin-top:10px">
+          <label style="grid-column:1/-1">Teléfonos (separados por /)<input data-field="phones" value="${esc(phonesToText(l.phones))}"></label>
+          <label>Web<input data-field="web" value="${esc(l.web || '')}"></label>
+          <label>Email<input data-field="email" type="email" value="${esc(l.email || '')}"></label>
+          <label>Instagram<input data-field="instagram" value="${esc(l.instagram || '')}" placeholder="https://instagram.com/…"></label>
+          <label>Zona<input data-field="location" value="${esc(l.location || '')}"></label>
+        </div>
+        <div class="row" style="margin-top:14px">
+          <span class="muted" style="font-size:12.5px">Creado ${esc(fmtStamp(l.created_at))}${l.source ? ' · desde ' + esc(l.source) : ''}</span>
+          <span class="spacer"></span>
+          <button class="danger sm" id="dDelete">Eliminar lead</button>
+        </div>
+      </details>
+    </div>`;
+}
+
+$('#dName').addEventListener('change', e => { const v = e.target.value.trim(); const l = curLead(); if (l && v && v !== l.name) updateLead(l.id, {name: v}); });
+$('#dName').addEventListener('keydown', e => { if (e.key === 'Enter') e.target.blur(); });
+
+$('#dBody').addEventListener('change', e => {
+  const l = curLead(); if (!l) return;
+  const t = e.target;
+  if (t.id === 'dStatus') return updateLead(l.id, {status: t.value}).then(() => toast('Estado: ' + ST[t.value]));
+  if (t.id === 'dNextDate') return updateLead(l.id, {next_action_at: t.value || null}).then(renderDrawer);
+  if (t.id === 'dNextText') return updateLead(l.id, {next_action: t.value.trim() || null});
+  if (t.dataset.field){
+    const f = t.dataset.field, v = t.value.trim();
+    if (f === 'phones') return updateLead(l.id, {phones: parsePhonesText(v, l.phones)}).then(renderDrawer);
+    return updateLead(l.id, {[f]: v || null}).then(renderDrawer);
+  }
+});
+$('#dBody').addEventListener('click', async e => {
+  const l = curLead(); if (!l) return;
+  const b = e.target.closest('button,a'); if (!b) return;
+  if (b.dataset.kind){ crm.composeKind = b.dataset.kind; document.querySelectorAll('#dKinds button').forEach(x => x.classList.toggle('on', x === b)); $('#dNote').focus(); return; }
+  if (b.dataset.act === 'openwa'){ crm.composeKind = 'whatsapp'; setTimeout(renderDrawerKinds, 0); return; }
+  if (b.dataset.act === 'opencall'){ crm.composeKind = 'llamada'; setTimeout(renderDrawerKinds, 0); return; }
+  if (b.dataset.next){
+    if (b.dataset.next === 'clear') await updateLead(l.id, {next_action_at: null, next_action: null});
+    else await updateLead(l.id, {next_action_at: addDaysISO(+b.dataset.next)});
+    renderDrawer(); return;
+  }
+  if (b.id === 'dSaveNote') return saveNote();
+  if (b.dataset.quick === 'noatendio'){
+    const patch = {};
+    if (['nuevo', 'contactado'].includes(l.status)) patch.status = 'sin_respuesta';
+    if (!l.next_action_at){ patch.next_action_at = addDaysISO(1); patch.next_action = l.next_action || 'Volver a llamar'; }
+    b.disabled = true;
+    if (await addNote(l, 'llamada', 'No atendió', patch)){ renderDrawer(); toast('Registrado: no atendió' + (patch.next_action_at ? ' · volver a llamar mañana' : '')); }
+    return;
+  }
+  if (b.dataset.quick === 'wasent'){
+    b.disabled = true;
+    const body = $('#dNote').value.trim() || 'Le escribí por WhatsApp';
+    if (await addNote(l, 'whatsapp', body)){ renderDrawer(); toast('Registrado'); }
+    return;
+  }
+  if (b.dataset.delnote){
+    if (!confirm('¿Borrar esta nota?')) return;
+    const {error} = await sb.from('crm_notes').delete().eq('id', b.dataset.delnote);
+    if (error) return toast('No se pudo borrar');
+    crm.notes[l.id] = (crm.notes[l.id] || []).filter(n => n.id !== b.dataset.delnote);
+    renderDrawer(); return;
+  }
+  if (b.id === 'dDelete'){
+    if (!confirm(`¿Eliminar "${l.name}" y todas sus notas? No se puede deshacer.`)) return;
+    const {error} = await sb.from('crm_leads').delete().eq('id', l.id);
+    if (error) return toast('No se pudo eliminar: ' + error.message);
+    crm.leads = crm.leads.filter(x => x.id !== l.id);
+    delete crm.notes[l.id];
+    closeDrawer(); toast('Lead eliminado');
+  }
+});
+$('#dBody').addEventListener('keydown', e => { if (e.target.id === 'dNote' && e.key === 'Enter' && (e.ctrlKey || e.metaKey)){ e.preventDefault(); saveNote(); } });
+function renderDrawerKinds(){ document.querySelectorAll('#dKinds button').forEach(x => x.classList.toggle('on', x.dataset.kind === crm.composeKind)); }
+async function saveNote(){
+  const l = curLead(); if (!l) return;
+  const body = $('#dNote').value.trim();
+  if (!body) return toast('Escribí algo para guardar');
+  $('#dSaveNote').disabled = true;
+  if (await addNote(l, crm.composeKind, body)){ renderDrawer(); toast('Guardado'); }
+  else $('#dSaveNote').disabled = false;
+}
+
+/* ---------- New lead ---------- */
+$('#btnNew').addEventListener('click', () => { $('#newForm').reset(); $('#dlgNew').showModal(); $('#nName').focus(); });
+$('#dlgNew').addEventListener('close', async () => {
+  if ($('#dlgNew').returnValue !== 'ok') return;
+  const name = $('#nName').value.trim(); if (!name) return;
+  const phones = parsePhonesText($('#nPhone').value);
+  const key = phones[0] ? 'p:' + digitsOf(phones[0].n) : 'n:' + fold(name) + ':' + Date.now();
+  const {data, error} = await sb.from('crm_leads').insert({dedupe_key: key, name, phones, location: $('#nLoc').value.trim() || null, source: 'manual'}).select().single();
+  if (error) return toast(/duplicate|unique/i.test(error.message) ? 'Ya existe un lead con ese teléfono' : 'No se pudo crear: ' + error.message);
+  crm.leads.push(data); crm.notes[data.id] = [];
+  if (crm.filter !== 'todos' && crm.filter !== 'activos' && crm.filter !== 'nuevo') crm.filter = 'activos';
+  openDrawer(data.id);
+});
+
+/* ---------- Settings ---------- */
+$('#btnSettings').addEventListener('click', () => { $('#sTemplate').value = settings.template; $('#dlgSettings').showModal(); });
+$('#dlgSettings').addEventListener('close', () => { settings.template = $('#sTemplate').value; store('template', settings.template); renderPipe(); if (crm.openId) renderDrawer(); });
+
+/* ---------- Export ---------- */
+async function exportCRM(){
+  const {data: notes, error} = await sb.from('crm_notes').select('lead_id,kind,body,created_at').order('created_at', {ascending: true}).range(0, 9999);
+  if (error) return toast('No se pudieron leer las notas');
+  const byLead = {};
+  for (const n of notes || []) (byLead[n.lead_id] ||= []).push(`${isoLocal(new Date(n.created_at))} ${(KIND[n.kind] || [, n.kind])[1]}: ${n.body}`);
+  const head = ['Nombre del complejo','Teléfono/WhatsApp','Página Web','Email','Instagram','Zona','Estado','Último contacto','Próxima acción (fecha)','Próxima acción','Notas'];
+  const rows = filterLeads().map(l => [l.name, phonesToText(l.phones), l.web || '', l.email || '', l.instagram || '', l.location || '', ST[l.status] || l.status,
+    l.last_contact_at ? isoLocal(new Date(l.last_contact_at)) : '', l.next_action_at || '', l.next_action || '', (byLead[l.id] || []).join(' | ')]);
+  const csv = [head, ...rows].map(r => r.map(c => { c = String(c ?? ''); return /[";\n]/.test(c) ? '"' + c.replace(/"/g, '""') + '"' : c; }).join(';')).join('\r\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['﻿' + csv], {type: 'text/csv;charset=utf-8'}));
+  a.download = 'crm-prospectos-' + todayISO() + '.csv';
+  document.body.appendChild(a); a.click(); a.remove();
+  toast(`Exportados ${rows.length} leads (vista actual)`);
+}
+$('#btnExport').addEventListener('click', exportCRM);
+
+/* ---------- Import ---------- */
+function crmIndex(){
+  const keys = new Set(), phones = new Set();
+  for (const l of crm.leads){ keys.add(l.dedupe_key); for (const p of l.phones || []) { const d = digitsOf(p.n); if (d.length >= 8) phones.add(d.slice(-10)); } }
+  return {keys, phones};
+}
+function entryPhones(e){ return e.phoneEdit != null ? parsePhonesText(e.phoneEdit) : e.phones.map(p => ({n: fmtPhone(p), k: p.kind})); }
+function entryKey(e){ const ps = entryPhones(e); return ps[0] && digitsOf(ps[0].n).length >= 8 ? 'p:' + digitsOf(ps[0].n) : 'n:' + fold(e.name); }
+function inCRM(e, idx){ return idx.keys.has(entryKey(e)) || entryPhones(e).some(p => idx.phones.has(digitsOf(p.n).slice(-10))); }
+function entryToLead(e){
+  const w = webText(e);
+  return {
+    dedupe_key: entryKey(e), name: e.name, phones: entryPhones(e),
+    web: w ? (/^https?:/.test(w) ? w : 'https://' + w) : null,
+    email: e.emails[0] || null,
+    instagram: e.profile || (e.user ? 'https://www.instagram.com/' + e.user : null),
+    location: cleanLocation(e.location) || null,
+    source: e.posts.some(u => /google\./.test(u)) ? 'Google Maps' : (e.user ? 'Instagram' : 'archivo'),
+    source_url: e.posts[0] || null
+  };
+}
+function renderImport(){
+  const has = entries.length > 0;
+  $('#impResults').hidden = !has;
+  $('#drop').innerHTML = has
+    ? '<strong style="display:inline">+ Sumar otro archivo</strong> <span>· arrastralo o hacé clic</span>'
+    : '<strong>Arrastrá el CSV o el .txt acá, o hacé clic para elegirlo</strong><span>Instagram, Google Maps, PhantomBuster (también lo copiado de la consola).</span>';
+  $('#banners').innerHTML = truncated ? '<div class="banner"><b>El archivo vino cortado.</b> La herramienta de exportación llegó a su límite, así que faltan filas.</div>' : '';
+  if (!has) return;
+  const idx = crmIndex();
+  const valid = [], disc = [];
+  for (const e of entries){ const c = classify(e); (c.ok ? valid : disc).push([e, c]); }
+  const seen = new Set(), state = new Map();
+  for (const [e] of valid){
+    const k = entryKey(e);
+    state.set(e.id, inCRM(e, idx) ? 'crm' : seen.has(k) ? 'rep' : 'new');
+    seen.add(k);
+  }
+  const fresh = valid.filter(([e]) => state.get(e.id) === 'new');
+  $('#iValid').textContent = valid.length;
+  $('#iNew').textContent = fresh.length;
+  $('#iDup').textContent = valid.length - fresh.length;
+  $('#iDisc').textContent = disc.length;
+  $('#cDisc').textContent = disc.length ? '· ' + disc.length : '';
+  $('#btnAdd').disabled = !fresh.length;
+  $('#btnAdd').textContent = fresh.length ? `Agregar ${fresh.length} al CRM` : 'Nada nuevo para agregar';
+
+  $('#tbImp').innerHTML = valid.length ? valid.map(([e]) => {
+    const stt = state.get(e.id);
+    const ps = entryPhones(e);
+    const w = webText(e);
+    return `<tr>
+      <td><div class="name" contenteditable="plaintext-only" spellcheck="false" data-edit="name" data-id="${e.id}">${esc(e.name)}</div>${e.location ? `<div class="meta">${esc(cleanLocation(e.location))}</div>` : ''}</td>
+      <td>${ps.map(p => `<div class="phone"><span class="num">${esc(p.n)}</span><span class="tag ${p.k}">${KIND_LABEL[p.k] || ''}</span></div>`).join('')}</td>
+      <td class="${w ? '' : 'hide-m'}">${w ? esc(w) : '<span class="muted">—</span>'}</td>
+      <td>${stt === 'crm' ? '<span class="tag muted">Ya en CRM</span>' : stt === 'rep' ? '<span class="tag muted" title="Otro registro de este archivo tiene el mismo teléfono">Repetido</span>' : '<span class="tag wa">Nuevo</span>'}</td>
+      <td style="text-align:right"><button class="ghost sm" data-imp="drop" data-id="${e.id}" title="Descartar">${ICON.x}</button></td>
+    </tr>`;
+  }).join('') : '<tr><td colspan="5" class="empty-state">No quedó ningún lead válido.</td></tr>';
+
+  $('#tbDisc').innerHTML = disc.length ? disc.map(([e, c]) => `
+    <tr>
+      <td><div class="name">${esc(e.name)}</div>${e.location ? `<div class="meta">${esc(cleanLocation(e.location))}</div>` : ''}</td>
+      <td><span class="tag reason">${esc(c.reason)}</span></td>
+      <td class="muted">${esc(c.detail)}</td>
+      <td style="text-align:right">${e.phones.length || e.phoneEdit ? `<button class="sm" data-imp="keep" data-id="${e.id}">Recuperar</button>` : ''}</td>
+    </tr>`).join('') : '<tr><td colspan="4" class="empty-state">Nada descartado.</td></tr>';
+}
+async function addToCRM(){
+  const idx = crmIndex();
+  const rows = entries.filter(e => classify(e).ok && !inCRM(e, idx)).map(entryToLead);
+  const seen = new Set(); const uniq = rows.filter(r => !seen.has(r.dedupe_key) && seen.add(r.dedupe_key));
+  if (!uniq.length) return;
+  $('#btnAdd').disabled = true; $('#btnAdd').textContent = 'Agregando…';
+  let added = [];
+  for (let i = 0; i < uniq.length; i += 300){
+    const {data, error} = await sb.from('crm_leads').upsert(uniq.slice(i, i + 300), {onConflict: 'owner_id,dedupe_key', ignoreDuplicates: true}).select();
+    if (error){ toast('Error al agregar: ' + error.message); break; }
+    added = added.concat(data || []);
+  }
+  crm.leads = crm.leads.concat(added.filter(a => !crm.leads.some(l => l.id === a.id)));
+  toast(`${added.length} lead${added.length === 1 ? '' : 's'} agregado${added.length === 1 ? '' : 's'} al CRM`);
+  entries = []; truncated = false;
+  crm.filter = 'nuevo';
+  setTab('pipe');
+}
+$('#btnAdd').addEventListener('click', addToCRM);
+$('#btnClearImp').addEventListener('click', () => { entries = []; truncated = false; renderImport(); });
+$('#tbImp').addEventListener('click', e => { const b = e.target.closest('[data-imp]'); if (!b) return; const en = entries.find(x => x.id === b.dataset.id); if (en){ en.override = 'drop'; renderImport(); } });
+$('#tbDisc').addEventListener('click', e => { const b = e.target.closest('[data-imp]'); if (!b) return; const en = entries.find(x => x.id === b.dataset.id); if (en){ en.override = 'keep'; renderImport(); } });
+document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.matches && e.target.matches('[data-edit]')){ e.preventDefault(); e.target.blur(); } });
+document.addEventListener('focusout', e => {
+  const el = e.target.closest && e.target.closest('[data-edit]'); if (!el) return;
+  const en = entries.find(x => x.id === el.dataset.id); if (!en) return;
+  const v = el.innerText.replace(/\s+/g, ' ').trim(); if (v) en.name = v;
+});
+
+async function readFile(f){
+  const buf = await f.arrayBuffer();
+  try{ return new TextDecoder('utf-8', {fatal: true}).decode(buf); }
+  catch(e){ return new TextDecoder('windows-1252').decode(buf); }
+}
+async function handleFiles(files){
+  let added = 0;
+  for (const f of files) added += ingest(await readFile(f));
+  renderImport();
+  toast(added ? `${added} registro${added === 1 ? '' : 's'} procesado${added === 1 ? '' : 's'}` : 'No se encontraron filas nuevas');
+}
+const drop = $('#drop'), fileIn = $('#file');
+drop.addEventListener('click', () => fileIn.click());
+drop.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); fileIn.click(); } });
+fileIn.addEventListener('change', () => { if (fileIn.files.length) handleFiles([...fileIn.files]); fileIn.value = ''; });
+['dragenter', 'dragover'].forEach(ev => document.addEventListener(ev, e => { if ($('#vImp').hidden) return; e.preventDefault(); drop.classList.add('over'); }));
+document.addEventListener('dragleave', e => { if (e.target === document.documentElement || !e.relatedTarget) drop.classList.remove('over'); });
+document.addEventListener('drop', e => { if ($('#vImp').hidden) return; e.preventDefault(); drop.classList.remove('over'); if (e.dataTransfer.files.length) handleFiles([...e.dataTransfer.files]); });
+$('#btnPaste').addEventListener('click', () => {
+  const t = $('#pasteArea').value;
+  if (!t.trim()) return toast('No hay texto para procesar');
+  const n = ingest(t); renderImport(); $('#pasteArea').value = ''; $('#pastePanel').open = false;
+  toast(n ? `${n} registros procesados` : 'No se encontraron filas nuevas');
+});
+$('#kw').value = settings.kw;
+$('#optFijos').checked = settings.fijos;
+$('#optUnconfirmed').checked = settings.unconfirmed;
+$('#kw').addEventListener('input', e => { settings.kw = e.target.value; store('kw', settings.kw); renderImport(); });
+$('#optFijos').addEventListener('change', e => { settings.fijos = e.target.checked; store('fijos', settings.fijos); renderImport(); });
+$('#optUnconfirmed').addEventListener('change', e => { settings.unconfirmed = e.target.checked; store('unconfirmed', settings.unconfirmed); renderImport(); });
+
+/* ---------- Refresh when coming back to the tab ---------- */
+document.addEventListener('visibilitychange', async () => {
+  if (document.visibilityState !== 'visible' || !user || Date.now() - crm.loadedAt < 60000) return;
+  try{ await loadLeads(); renderPipe(); if (crm.openId && !$('#drawer').contains(document.activeElement)) renderDrawer(); }catch(e){}
+});
+
+boot();
+</script>
+</body>
+</html>
