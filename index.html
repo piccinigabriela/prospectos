@@ -53,6 +53,8 @@ svg{width:16px;height:16px;flex:none}
 .login h1{margin:0;font-size:22px}
 .login label{display:grid;gap:4px;font-size:13px;color:var(--muted)}
 .login .err{color:var(--danger);font-size:14px;min-height:1.2em;margin:0}
+.login .err:empty{display:none}
+.login .ok{background:var(--accent-soft);color:var(--accent);border-radius:9px;padding:10px 12px;font-size:14px;margin:0}
 
 /* Header */
 .top{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
@@ -201,12 +203,14 @@ dialog label{display:grid;gap:4px;font-size:13px;color:var(--muted)}
   <form id="loginForm">
     <div>
       <h1>Prospectos</h1>
-      <p class="muted" style="margin:4px 0 0;font-size:14px">Entrá con tu cuenta de Loomi.</p>
+      <p class="muted" style="margin:4px 0 0;font-size:14px">Te mandamos un link a tu email para entrar.</p>
     </div>
     <label>Email<input type="email" id="lEmail" autocomplete="username" required></label>
-    <label>Contraseña<input type="password" id="lPass" autocomplete="current-password" required></label>
+    <label id="passWrap" hidden>Contraseña<input type="password" id="lPass" autocomplete="current-password"></label>
     <p class="err" id="lErr"></p>
-    <button class="primary" type="submit" id="lBtn">Entrar</button>
+    <p class="ok" id="lOk" hidden></p>
+    <button class="primary" type="submit" id="lBtn">Enviarme el link</button>
+    <button type="button" class="ghost" id="lMode" style="justify-self:center;font-size:13px">Entrar con contraseña</button>
   </form>
 </section>
 
@@ -814,17 +818,40 @@ async function enter(session){
 async function boot(){
   if (!window.supabase){ show('login'); $('#lErr').textContent = 'No se pudo cargar Supabase. Revisá la conexión y recargá.'; $('#lBtn').disabled = true; return; }
   sb = window.supabase.createClient(SB_URL, SB_KEY, {auth: {persistSession: true, autoRefreshToken: true}});
+  const hashErr = new URLSearchParams(location.hash.slice(1)).get('error_description');
   const {data: {session}} = await sb.auth.getSession();
-  if (session) await enter(session); else showLogin();
+  if (hashErr) history.replaceState(null, '', location.pathname);
+  if (session) await enter(session);
+  else showLogin(hashErr ? (/expired|invalid/i.test(hashErr) ? 'El link venció o ya se usó. Pedí uno nuevo.' : hashErr) : '');
 }
+let passMode = false;
+$('#lMode').addEventListener('click', () => {
+  passMode = !passMode;
+  $('#passWrap').hidden = !passMode;
+  $('#lPass').required = passMode;
+  $('#lBtn').textContent = passMode ? 'Entrar' : 'Enviarme el link';
+  $('#lMode').textContent = passMode ? 'Mejor mandame un link por email' : 'Entrar con contraseña';
+  $('#lErr').textContent = ''; $('#lOk').hidden = true;
+});
 $('#loginForm').addEventListener('submit', async e => {
   e.preventDefault();
-  $('#lBtn').disabled = true; $('#lErr').textContent = '';
-  const {data, error} = await sb.auth.signInWithPassword({email: $('#lEmail').value.trim(), password: $('#lPass').value});
+  const email = $('#lEmail').value.trim();
+  $('#lBtn').disabled = true; $('#lErr').textContent = ''; $('#lOk').hidden = true;
+  try{ localStorage.setItem('filtroLeads.email', email); }catch(_){}
+  if (!passMode){
+    const {error} = await sb.auth.signInWithOtp({email, options: {emailRedirectTo: location.origin + location.pathname, shouldCreateUser: false}});
+    $('#lBtn').disabled = false;
+    if (error){ $('#lErr').textContent = /not found|signups not allowed/i.test(error.message) ? 'Ese email no tiene cuenta.' : /rate|seconds/i.test(error.message) ? 'Esperá un minuto antes de pedir otro link.' : error.message; return; }
+    $('#lOk').hidden = false;
+    $('#lOk').textContent = 'Listo: revisá tu correo (y spam) y tocá el link. Se abre el CRM ya con la sesión iniciada.';
+    return;
+  }
+  const {data, error} = await sb.auth.signInWithPassword({email, password: $('#lPass').value});
   if (error){ showLogin(/invalid/i.test(error.message) ? 'Email o contraseña incorrectos.' : error.message); return; }
   $('#lPass').value = '';
   await enter(data.session);
 });
+try{ $('#lEmail').value = localStorage.getItem('filtroLeads.email') || ''; }catch(_){}
 $('#btnLogout').addEventListener('click', async () => { await sb.auth.signOut(); crm.leads = []; closeDrawer(); showLogin(); });
 
 /* ---------- Tabs ---------- */
