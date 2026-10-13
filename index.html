@@ -239,6 +239,13 @@ dialog label{display:grid;gap:4px;font-size:13px;color:var(--muted)}
     <div class="chips" id="chips"></div>
     <div class="toolbar">
       <input type="search" id="pq" placeholder="Buscar nombre, teléfono, zona…">
+      <select id="pZone" aria-label="Zona" style="max-width:220px"></select>
+      <select id="pSort" aria-label="Ordenar">
+        <option value="next">Ordenar: próxima acción</option>
+        <option value="zone">Ordenar: zona</option>
+        <option value="name">Ordenar: nombre</option>
+        <option value="recent">Ordenar: recién agregados</option>
+      </select>
       <span class="spacer"></span>
       <button id="btnExport" class="sm">Exportar CSV</button>
       <button id="btnNew" class="primary sm">+ Nuevo lead</button>
@@ -721,7 +728,22 @@ const settings = {
   unconfirmed: load('unconfirmed', false),
   template: load('template', '')
 };
-const crm = {leads: [], filter: 'activos', q: '', openId: null, notes: {}, composeKind: 'llamada', loadedAt: 0};
+const crm = {leads: [], filter: 'activos', q: '', zone: load('zone', ''), sort: load('sort', 'next'), openId: null, notes: {}, composeKind: 'llamada', loadedAt: 0};
+const PROVINCIAS = new Set(['buenos aires','caba','ciudad autonoma de buenos aires','catamarca','chaco','chubut','cordoba','corrientes','entre rios','formosa','jujuy','la pampa','la rioja','mendoza','misiones','neuquen','rio negro','salta','san juan','san luis','santa cruz','santa fe','santiago del estero','tierra del fuego','tucuman']);
+const zoneKey = l => { const z = zoneOf(l.location); return z ? fold(z) : '__none'; };
+function zoneOf(loc){
+  const parts = String(loc || '').split(/[,;]/).map(s => s.trim().replace(/^[A-Z]?\d{4}[A-Z]{0,3}\s+/, '').replace(/\s+AR$/i, '')).filter(Boolean);
+  for (let i = parts.length - 1; i >= 0; i--){
+    let p = parts[i];
+    if (PROVINCIAS.has(fold(p)) && i > 0) continue;
+    for (const pr of PROVINCIAS) if (fold(p).endsWith(' ' + pr) && !/\b(de|del)$/i.test(fold(p).slice(0, -pr.length).trim())){ p = p.slice(0, p.length - pr.length).trim(); break; }
+    if (/^(villa|barrio|centro|country|zona)$/i.test(p) && i > 0) continue;
+    if (/\d/.test(p) || /^(ruta|rp|rn|km|calle|av\.?|avenida)\b/i.test(p)) continue;
+    if (p.length < 3) continue;
+    return p.replace(/\s+/g, ' ');
+  }
+  return '';
+}
 let entries = [];      // import buffer (used by the filter engine)
 let truncated = false;
 
@@ -897,6 +919,7 @@ document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click
 function filterLeads(){
   const t = todayISO(), q = fold(crm.q).trim(), qd = digitsOf(crm.q);
   return crm.leads.filter(l => {
+    if (crm.zone && zoneKey(l) !== crm.zone) return false;
     if (crm.filter === 'hoy'){ if (!l.next_action_at || l.next_action_at > t || CLOSED.has(l.status)) return false; }
     else if (crm.filter === 'activos'){ if (CLOSED.has(l.status)) return false; }
     else if (crm.filter !== 'todos' && l.status !== crm.filter) return false;
@@ -906,19 +929,24 @@ function filterLeads(){
     }
     return true;
   }).sort((a, b) => {
+    const byName = (a.name || '').localeCompare(b.name || '', 'es');
+    if (crm.sort === 'name') return byName;
+    if (crm.sort === 'recent') return a.created_at < b.created_at ? 1 : a.created_at > b.created_at ? -1 : byName;
+    if (crm.sort === 'zone'){ const za = zoneOf(a.location), zb = zoneOf(b.location); if (!za !== !zb) return za ? -1 : 1; return za.localeCompare(zb, 'es') || byName; }
     const da = a.next_action_at || '9999', db = b.next_action_at || '9999';
     if (da !== db) return da < db ? -1 : 1;
-    return (a.name || '').localeCompare(b.name || '', 'es');
+    return byName;
   });
 }
 function renderChips(){
   const t = todayISO();
-  const count = f => crm.leads.filter(l => f(l)).length;
+  const inZone = l => !crm.zone || zoneKey(l) === crm.zone;
+  const count = f => crm.leads.filter(l => inZone(l) && f(l)).length;
   const chips = [
     ['hoy', 'Para hoy', count(l => l.next_action_at && l.next_action_at <= t && !CLOSED.has(l.status)), true],
     ['activos', 'Activos', count(l => !CLOSED.has(l.status))],
     ...STATUSES.map(([k, v]) => [k, v, count(l => l.status === k)]),
-    ['todos', 'Todos', crm.leads.length]
+    ['todos', 'Todos', count(() => true)]
   ];
   $('#chips').innerHTML = chips.map(([k, label, n, hot]) =>
     `<button class="chip ${crm.filter === k ? 'on' : ''} ${hot && n ? 'hot' : ''}" data-filter="${k}">${label}<b>${n}</b></button>`).join('');
@@ -932,9 +960,19 @@ function phoneMini(l){
     `<a class="ic" href="tel:${esc(p.n)}" title="Llamar" data-stop>${ICON.tel}</a>` +
     (ps.length > 1 ? `<span class="tag muted">+${ps.length - 1}</span>` : '') + `</div>`;
 }
+function renderZones(){
+  const counts = new Map();
+  for (const l of crm.leads){ const k = zoneKey(l); if (!counts.has(k)) counts.set(k, [zoneOf(l.location) || 'Sin zona', 0]); counts.get(k)[1]++; }
+  if (crm.zone && !counts.has(crm.zone)) crm.zone = '';
+  const opts = [...counts.entries()].sort((a, b) => (a[0] === '__none') - (b[0] === '__none') || b[1][1] - a[1][1] || a[1][0].localeCompare(b[1][0], 'es'));
+  $('#pZone').innerHTML = `<option value="">Todas las zonas</option>` + opts.map(([k, [label, n]]) => `<option value="${esc(k)}" ${crm.zone === k ? 'selected' : ''}>${esc(label)} (${n})</option>`).join('');
+  $('#pZone').hidden = opts.length < 2;
+  $('#pSort').value = crm.sort;
+}
 function renderPipe(){
   if ($('#vApp').hidden) return;
   renderChips();
+  renderZones();
   const list = filterLeads();
   const empty = !crm.leads.length
     ? 'Todavía no hay leads. Andá a <b>Importar</b> para cargar un CSV, o creá uno con <b>+ Nuevo lead</b>.'
@@ -953,6 +991,8 @@ function renderPipe(){
 }
 $('#chips').addEventListener('click', e => { const b = e.target.closest('[data-filter]'); if (!b) return; crm.filter = b.dataset.filter; renderPipe(); });
 $('#pq').addEventListener('input', e => { crm.q = e.target.value; renderPipe(); });
+$('#pZone').addEventListener('change', e => { crm.zone = e.target.value; store('zone', crm.zone); renderPipe(); });
+$('#pSort').addEventListener('change', e => { crm.sort = e.target.value; store('sort', crm.sort); renderPipe(); });
 $('#tbPipe').addEventListener('click', e => {
   if (e.target.closest('[data-stop]')) return;
   const tr = e.target.closest('tr[data-id]'); if (tr) openDrawer(tr.dataset.id);
