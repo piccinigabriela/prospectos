@@ -264,6 +264,10 @@ dialog label{display:grid;gap:4px;font-size:13px;color:var(--muted)}
         <input id="mapsQ" placeholder="cabañas Tandil" style="flex:1 1 240px" autocomplete="off">
         <button class="primary" id="mapsGo" type="submit">Buscar</button>
       </form>
+      <div class="row" style="margin:0 0 6px;font-size:13.5px;color:var(--muted)">
+        <label class="row" style="gap:6px">Destildar los que tengan más de <input id="mapsMaxRev" type="number" min="0" step="50" style="width:80px;padding:4px 8px"> reseñas</label>
+        <span class="hint" style="margin:0">(suelen ser hoteles grandes; vacío = no filtrar)</span>
+      </div>
       <p class="hint" id="mapsUsage" style="margin:0 0 14px"></p>
       <div id="mapsResults"></div>
     </div>
@@ -1330,7 +1334,8 @@ const mapsUsed = () => { const u = crm.meta.places_usage; return u && u.month ==
 
 /* ---------- Buscar en Maps (Google Places API New) ---------- */
 const PLACES_FIELDS = 'places.id,places.displayName,places.formattedAddress,places.internationalPhoneNumber,places.nationalPhoneNumber,places.websiteUri,places.rating,places.userRatingCount,places.googleMapsUri,places.businessStatus,places.primaryTypeDisplayName,nextPageToken';
-const maps = {q: '', results: [], next: null, loading: false, error: '', sel: new Set()};
+const maps = {q: '', results: [], next: null, loading: false, error: '', note: '', sel: new Set()};
+const maxRev = () => { const v = parseInt(load('maxRev', '400'), 10); return v > 0 ? v : 0; };
 
 function explainPlacesError(msg){
   msg = String(msg || '');
@@ -1385,6 +1390,7 @@ function candState(c, idx){
   if (c.closed) return 'closed';
   if (c.kw) return 'kw';
   if (!c.phones.length) return 'nophone';
+  if (maxRev() && (c.reviews || 0) > maxRev()) return 'big';
   return 'new';
 }
 function mapsIndex(){ const idx = crmIndex(); idx.urls = new Set(crm.leads.map(l => l.source_url).filter(Boolean)); return idx; }
@@ -1394,10 +1400,15 @@ async function runMapsSearch(more){
   const q = more ? maps.q : $('#mapsQ').value.trim();
   if (!q){ $('#mapsQ').focus(); return; }
   maps.loading = true; maps.error = '';
-  if (!more){ maps.q = q; maps.results = []; maps.next = null; maps.sel = new Set(); }
+  if (!more){ maps.q = q; maps.results = []; maps.next = null; maps.sel = new Set(); maps.note = ''; }
   renderMaps();
   try{
-    const json = await placesSearch(q, more ? maps.next : null);
+    let json = await placesSearch(q, more ? maps.next : null);
+    if (!more && !(json.places && json.places.length) && !/alojamiento/i.test(q)){
+      const q2 = /\bcaba[ñn]as?\b/i.test(q) ? q.replace(/\b(caba[ñn]as?)\b/i, '$1 de alojamiento') : q + ' alojamiento';
+      const j2 = await placesSearch(q2, null);
+      if (j2.places && j2.places.length){ json = j2; maps.q = q2; maps.note = `Google no encontró “${q}”, así que busqué “${q2}”.`; }
+    }
     const idx = mapsIndex();
     for (const p of json.places || []){
       if (maps.results.some(r => r.id === p.id)) continue;
@@ -1412,19 +1423,21 @@ async function runMapsSearch(more){
   renderMaps();
 }
 const MAPS_STATE = {
-  crm: ['Ya en CRM', 'muted'], closed: ['Cerrado', 'reason'], kw: ['Rubro excluido', 'reason'], nophone: ['Sin teléfono', 'muted'], new: ['Nuevo', 'wa']
+  crm: ['Ya en CRM', 'muted'], closed: ['Cerrado', 'reason'], kw: ['Rubro excluido', 'reason'], nophone: ['Sin teléfono', 'muted'], big: ['Muchas reseñas', 'unk'], new: ['Nuevo', 'wa']
 };
 function renderMaps(){
   const hasKey = !!mapsKey();
   $('#mapsSetup').hidden = hasKey;
   $('#mapsMain').hidden = !hasKey;
   if (!hasKey) return;
+  if (document.activeElement !== $('#mapsMaxRev')) $('#mapsMaxRev').value = maxRev() || '';
   const used = mapsUsed(), limit = mapsLimit();
   $('#mapsUsage').innerHTML = `Este mes usaste <b>${used}</b> de ${limit} búsquedas gratis` + (used >= limit * 0.9 ? ' · <span class="overdue">casi en el límite</span>' : '') + '. Cada página de 20 resultados cuenta como 1.';
   $('#mapsGo').disabled = maps.loading;
   $('#mapsGo').textContent = maps.loading && !maps.results.length ? 'Buscando…' : 'Buscar';
   const box = $('#mapsResults');
-  const err = maps.error ? `<div class="banner" style="background:var(--danger-soft);color:var(--danger);margin:0 0 12px">${esc(maps.error)}</div>` : '';
+  const err = (maps.error ? `<div class="banner" style="background:var(--danger-soft);color:var(--danger);margin:0 0 12px">${esc(maps.error)}</div>` : '')
+    + (maps.note && !maps.error ? `<p class="hint" style="margin:0 0 10px">ℹ️ ${esc(maps.note)}</p>` : '');
   if (!maps.results.length){
     box.innerHTML = err + (maps.loading ? '<div class="empty-state">Buscando en Google Maps…</div>'
       : maps.q ? `<div class="card empty-state">No hubo resultados para “${esc(maps.q)}”. Probá con otra zona o palabra.${maps.debug != null ? `<div style="margin-top:10px;font:12px ui-monospace,monospace;word-break:break-all;opacity:.8">Respuesta de Google: ${esc(maps.debug || '(vacía)')}</div>` : ''}</div>`
@@ -1494,6 +1507,17 @@ $('#mapsResults').addEventListener('change', e => {
   }
   if (t.dataset.pid){ t.checked ? maps.sel.add(t.dataset.pid) : maps.sel.delete(t.dataset.pid); renderMaps(); }
 });
+let maxRevT;
+function applyMaxRev(){
+  const v = parseInt($('#mapsMaxRev').value, 10);
+  const nv = v > 0 ? String(v) : '0';
+  if (nv === String(maxRev())) return;
+  store('maxRev', nv);
+  const idx = mapsIndex();
+  for (const c of maps.results){ const s = candState(c, idx); if (s === 'new') maps.sel.add(c.id); else if (s === 'big') maps.sel.delete(c.id); }
+  renderMaps();
+}
+$('#mapsMaxRev').addEventListener('input', () => { clearTimeout(maxRevT); maxRevT = setTimeout(applyMaxRev, 350); });
 $('#mapsKeySave').addEventListener('click', async () => {
   const k = $('#mapsKeyInput').value.trim();
   if (!/^AIza[\w-]{30,}$/.test(k)) return toast('Esa clave no parece válida: tiene que empezar con AIza');
