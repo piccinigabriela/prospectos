@@ -1406,6 +1406,7 @@ async function runMapsSearch(more){
       if (candState(c, idx) === 'new') maps.sel.add(c.id);
     }
     maps.next = json.nextPageToken || null;
+    maps.debug = (json.places && json.places.length) ? '' : JSON.stringify(json).slice(0, 400);
   }catch(e){ maps.error = e.message; }
   maps.loading = false;
   renderMaps();
@@ -1426,7 +1427,7 @@ function renderMaps(){
   const err = maps.error ? `<div class="banner" style="background:var(--danger-soft);color:var(--danger);margin:0 0 12px">${esc(maps.error)}</div>` : '';
   if (!maps.results.length){
     box.innerHTML = err + (maps.loading ? '<div class="empty-state">Buscando en Google Maps…</div>'
-      : maps.q ? '<div class="card empty-state">No hubo resultados. Probá con otra zona o palabra.</div>'
+      : maps.q ? `<div class="card empty-state">No hubo resultados para “${esc(maps.q)}”. Probá con otra zona o palabra.${maps.debug != null ? `<div style="margin-top:10px;font:12px ui-monospace,monospace;word-break:break-all;opacity:.8">Respuesta de Google: ${esc(maps.debug || '(vacía)')}</div>` : ''}</div>`
       : `<div class="card empty-state">Escribí qué y dónde buscar.<div class="quick" style="justify-content:center;margin-top:12px">${['cabañas Tandil', 'complejos Villa Gesell', 'cabañas Mina Clavero', 'apart San Martín de los Andes'].map(s => `<button class="sm" data-mq="${esc(s)}">${esc(s)}</button>`).join('')}</div></div>`);
     return;
   }
