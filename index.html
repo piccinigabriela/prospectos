@@ -103,6 +103,9 @@ tr.sel td:first-child{box-shadow:inset 4px 0 0 var(--accent)}
 .phone{display:flex;align-items:center;gap:6px;white-space:nowrap}
 a.ic{display:inline-flex;color:var(--accent);padding:5px;border-radius:7px}
 a.ic svg{width:19px;height:19px}
+a.weblink{display:inline-flex;align-items:center;gap:5px;color:var(--accent);text-decoration:underline;text-underline-offset:3px;font-size:15px;word-break:break-all}
+a.weblink:hover{color:var(--text)}
+a.weblink svg{width:15px;height:15px}
 a.ic:hover{background:var(--accent-soft)}
 .empty-state{padding:36px 16px;text-align:center;color:var(--muted)}
 .overdue{color:var(--danger);font-weight:600}
@@ -730,6 +733,7 @@ const ICON = {
   wa: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 21l2.1-5.5A8.4 8.4 0 1 1 21 11.5z"/></svg>',
   tel: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg>',
   ext: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14 21 3"/></svg>',
+  globe: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>',
   x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>'
 };
 
@@ -811,6 +815,8 @@ function parsePhonesText(text, prev = []){
     return p;
   });
 }
+const webHref = w => !w ? '' : (/^https?:/i.test(w) ? w : 'https://' + w);
+const webLabel = w => String(w || '').replace(/^https?:\/\/(www\.)?/i, '').replace(/\/$/, '');
 const phonesToText = arr => (arr || []).map(p => p.n).join(' / ');
 function waLink(p, lead){
   let url = 'https://wa.me/' + digitsOf(p.n);
@@ -982,12 +988,13 @@ function renderChips(){
 }
 function phoneMini(l){
   const ps = l.phones || [];
-  if (!ps.length) return '<span class="muted">—</span>';
+  if (!ps.length) return l.web ? `<div class="phone"><span class="muted">Sin teléfono</span><a class="ic" href="${esc(webHref(l.web))}" target="_blank" rel="noopener" title="Sitio web" data-stop>${ICON.globe}</a></div>` : '<span class="muted">—</span>';
   const p = ps[0];
   return `<div class="phone"><span class="num">${esc(p.n)}</span>` +
     (p.k !== 'fijo' ? `<a class="ic" href="${esc(waLink(p, l))}" target="_blank" rel="noopener" title="WhatsApp" data-stop>${ICON.wa}</a>` : '') +
     `<a class="ic" href="tel:${esc(p.n)}" title="Llamar" data-stop>${ICON.tel}</a>` +
-    (ps.length > 1 ? `<span class="tag muted">+${ps.length - 1}</span>` : '') + `</div>`;
+    (ps.length > 1 ? `<span class="tag muted">+${ps.length - 1}</span>` : '') +
+    (l.web ? `<a class="ic" href="${esc(webHref(l.web))}" target="_blank" rel="noopener" title="Sitio web: ${esc(webLabel(l.web))}" data-stop>${ICON.globe}</a>` : '') + `</div>`;
 }
 function renderZones(){
   const counts = new Map();
@@ -1315,7 +1322,7 @@ function renderImport(){
     return `<tr>
       <td><div class="name" contenteditable="plaintext-only" spellcheck="false" data-edit="name" data-id="${e.id}">${esc(e.name)}</div>${e.location ? `<div class="meta">${esc(cleanLocation(e.location))}</div>` : ''}</td>
       <td>${ps.map(p => `<div class="phone"><span class="num">${esc(p.n)}</span><span class="tag ${p.k}">${KIND_LABEL[p.k] || ''}</span></div>`).join('')}</td>
-      <td class="${w ? '' : 'hide-m'}">${w ? esc(w) : '<span class="muted">—</span>'}</td>
+      <td class="${w ? '' : 'hide-m'}">${w ? `<a class="weblink" href="${esc(webHref(w))}" target="_blank" rel="noopener">${ICON.ext}${esc(webLabel(w))}</a>` : '<span class="muted">—</span>'}</td>
       <td>${stt === 'crm' ? '<span class="tag muted">Ya en CRM</span>' : stt === 'rep' ? '<span class="tag muted" title="Otro registro de este archivo tiene el mismo teléfono">Repetido</span>' : '<span class="tag wa">Nuevo</span>'}</td>
       <td style="text-align:right"><button class="ghost sm" data-imp="drop" data-id="${e.id}" title="Descartar">${ICON.x}</button></td>
     </tr>`;
@@ -1569,7 +1576,7 @@ function renderMaps(){
           <div style="min-width:0">
             <div class="name">${esc(c.name)}</div>
             <div class="meta">${[c.location ? esc(c.location) : '', c.rating ? `★ ${String(c.rating).replace('.', ',')} (${c.reviews || 0})` : '', c.type ? esc(c.type) : '', c.maps ? `<a href="${esc(c.maps)}" target="_blank" rel="noopener">ver en Maps</a>` : ''].filter(Boolean).join(' · ')}</div>
-            ${c.phones.length || c.web ? `<div class="row" style="gap:8px;margin-top:3px">${c.phones.map(p => `<span class="num">${esc(p.n)}</span><span class="tag ${p.k}">${KIND_LABEL[p.k]}</span>`).join('')}${c.web ? `<span class="meta" style="margin:0">${esc(c.web.replace(/^https?:\/\/(www\.)?/, ''))}</span>` : ''}</div>` : ''}
+            ${c.phones.length || c.web ? `<div class="row" style="gap:8px;margin-top:3px">${c.phones.map(p => `<span class="num">${esc(p.n)}</span><span class="tag ${p.k}">${KIND_LABEL[p.k]}</span>`).join('')}${c.web ? `<a class="weblink" href="${esc(webHref(c.web))}" target="_blank" rel="noopener" title="Abrir sitio web">${ICON.ext}${esc(webLabel(c.web))}</a>` : ''}</div>` : ''}
           </div>
           <span class="tag ${MAPS_STATE[s][1]}" style="align-self:start">${MAPS_STATE[s][0]}</span>
         </label>`).join('')}
