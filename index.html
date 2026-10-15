@@ -898,6 +898,8 @@ async function enter(session){
   show('app');
   $('#tbPipe').innerHTML = '<tr><td colspan="5" class="empty-state">Cargando leads…</td></tr>';
   try{ await Promise.all([loadLeads(), loadMeta()]); }catch(e){ toast('Error cargando leads: ' + e.message); }
+  restoreMapsState();
+  if (maps.restored && maps.q) $('#mapsQ').value = maps.origQ || maps.q;
   renderPipe();
 }
 async function boot(){
@@ -1426,6 +1428,20 @@ const mapsUsed = () => { const u = crm.meta.places_usage; return u && u.month ==
 /* ---------- Buscar en Maps (Google Places API New) ---------- */
 const PLACES_FIELDS = 'places.id,places.displayName,places.formattedAddress,places.internationalPhoneNumber,places.nationalPhoneNumber,places.websiteUri,places.rating,places.userRatingCount,places.googleMapsUri,places.businessStatus,places.primaryTypeDisplayName,nextPageToken';
 const maps = {q: '', results: [], next: null, loading: false, error: '', note: '', sel: new Set()};
+function saveMapsState(){
+  try{
+    if (!maps.results.length){ localStorage.removeItem('filtroLeads.mapsState'); return; }
+    localStorage.setItem('filtroLeads.mapsState', JSON.stringify({q: maps.q, origQ: maps.origQ, results: maps.results, next: maps.next, note: maps.note, sel: [...maps.sel], savedAt: Date.now()}));
+  }catch(e){}
+}
+function restoreMapsState(){
+  try{
+    const s = JSON.parse(localStorage.getItem('filtroLeads.mapsState') || 'null');
+    if (!s || !s.results || !s.results.length || Date.now() - s.savedAt > 7 * 86400000) return;
+    Object.assign(maps, {q: s.q, origQ: s.origQ, results: s.results, next: s.next, note: s.note || '', sel: new Set(s.sel || [])});
+    maps.restored = true;
+  }catch(e){}
+}
 const maxRev = () => { const v = parseInt(load('maxRev', '400'), 10); return v > 0 ? v : 0; };
 
 function explainPlacesError(msg){
@@ -1497,6 +1513,7 @@ async function runMapsSearch(more){
   }
   maps.loading = true; maps.error = '';
   if (!more){ maps.q = q; maps.results = []; maps.next = null; maps.sel = new Set(); maps.note = ''; }
+  maps.restored = false;
   renderMaps();
   try{
     let json = await placesSearch(q, more ? maps.next : null);
@@ -1538,6 +1555,7 @@ const MAPS_STATE = {
   crm: ['Ya en CRM', 'muted'], closed: ['Cerrado', 'reason'], kw: ['Rubro excluido', 'reason'], nophone: ['Sin teléfono', 'muted'], big: ['Muchas reseñas', 'unk'], new: ['Nuevo', 'wa']
 };
 function renderMaps(){
+  if (!maps.loading) saveMapsState();
   const hasKey = !!mapsKey();
   $('#mapsSetup').hidden = hasKey;
   $('#mapsMain').hidden = !hasKey;
@@ -1550,7 +1568,8 @@ function renderMaps(){
   $('#mapsGo').textContent = maps.loading && !maps.results.length ? 'Buscando…' : 'Buscar';
   const box = $('#mapsResults');
   const err = (maps.error ? `<div class="banner" style="background:var(--danger-soft);color:var(--danger);margin:0 0 12px">${esc(maps.error)}</div>` : '')
-    + (maps.note && !maps.error ? `<p class="hint" style="margin:0 0 10px">ℹ️ ${esc(maps.note)}</p>` : '');
+    + (maps.note && !maps.error ? `<p class="hint" style="margin:0 0 10px">ℹ️ ${esc(maps.note)}</p>` : '')
+    + (maps.restored && maps.results.length && !maps.loading ? `<p class="hint" style="margin:0 0 10px">↺ Esta es tu última búsqueda, con lo que tenías tildado. No gastó ninguna búsqueda nueva.</p>` : '');
   if (!maps.results.length){
     box.innerHTML = err + (maps.loading ? '<div class="empty-state">Buscando en Google Maps…</div>'
       : maps.q ? `<div class="card empty-state">No hubo resultados para “${esc(maps.q)}”. Probá con otra zona o palabra.${maps.debug != null ? `<div style="margin-top:10px;font:13.5px ui-monospace,monospace;word-break:break-all;opacity:.8">Respuesta de Google: ${esc(maps.debug || '(vacía)')}</div>` : ''}</div>`
