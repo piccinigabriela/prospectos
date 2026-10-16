@@ -1427,12 +1427,45 @@ const mapsUsed = () => { const u = crm.meta.places_usage; return u && u.month ==
 
 /* ---------- Buscar en Maps (Google Places API New) ---------- */
 const PLACES_FIELDS = 'places.id,places.displayName,places.formattedAddress,places.internationalPhoneNumber,places.nationalPhoneNumber,places.websiteUri,places.rating,places.userRatingCount,places.googleMapsUri,places.businessStatus,places.primaryTypeDisplayName,nextPageToken';
-const maps = {q: '', results: [], next: null, loading: false, error: '', note: '', sel: new Set()};
+const maps = {q: '', results: [], next: null, loading: false, error: '', note: '', sel: new Set(), saved: [], savedLoaded: false, openedSaved: null};
 function saveMapsState(){
   try{
     if (!maps.results.length){ localStorage.removeItem('filtroLeads.mapsState'); return; }
     localStorage.setItem('filtroLeads.mapsState', JSON.stringify({q: maps.q, origQ: maps.origQ, results: maps.results, next: maps.next, note: maps.note, sel: [...maps.sel], savedAt: Date.now()}));
   }catch(e){}
+}
+const keyOf = q => fold(q).replace(/\s+/g, ' ').trim();
+async function loadSaved(){
+  const {data, error} = await sb.from('crm_maps_searches').select('id,k,q,results,sel,updated_at,created_at').order('updated_at', {ascending: false}).range(0, 199);
+  if (error) return;
+  maps.saved = data || []; maps.savedLoaded = true;
+  if (maps.origQ && maps.results.length && !maps.saved.some(s => s.k === keyOf(maps.origQ))) persistSearch();
+}
+let persistT;
+function persistSearchSoon(){ clearTimeout(persistT); persistT = setTimeout(persistSearch, 700); }
+async function persistSearch(){
+  clearTimeout(persistT);
+  if (!maps.results.length || !maps.origQ) return;
+  const row = {k: keyOf(maps.origQ), q: maps.origQ, results: maps.results, sel: [...maps.sel], next: maps.next, note: maps.note || null, updated_at: new Date().toISOString()};
+  const {data, error} = await sb.from('crm_maps_searches').upsert(row, {onConflict: 'owner_id,k'}).select('id,k,q,results,sel,updated_at,created_at').single();
+  if (error || !data) return;
+  maps.saved = [data, ...(maps.saved || []).filter(s => s.k !== data.k)];
+  if (!$('#vMaps').hidden) renderMapsHistory();
+}
+function openSaved(k){
+  const s = (maps.saved || []).find(x => x.k === k); if (!s) return;
+  Object.assign(maps, {q: s.q, origQ: s.q, results: s.results || [], next: null, note: '', error: '', sel: new Set(s.sel || []), restored: false, openedSaved: s.updated_at});
+  $('#mapsQ').value = s.q;
+  renderMaps();
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+async function deleteSaved(id){
+  const s = (maps.saved || []).find(x => x.id === id); if (!s) return;
+  if (!confirm(`¿Borrar la búsqueda guardada “${s.q}”? Los leads que ya agregaste quedan en el CRM.`)) return;
+  const {error} = await sb.from('crm_maps_searches').delete().eq('id', id);
+  if (error) return toast('No se pudo borrar');
+  maps.saved = maps.saved.filter(x => x.id !== id);
+  renderMapsHistory(); toast('Búsqueda borrada');
 }
 function restoreMapsState(){
   try{
@@ -1502,18 +1535,18 @@ function candState(c, idx){
 }
 function mapsIndex(){ const idx = crmIndex(); idx.urls = new Set(crm.leads.map(l => l.source_url).filter(Boolean)); return idx; }
 
-async function runMapsSearch(more){
+async function runMapsSearch(more, force){
   if (maps.loading) return;
   const q = more ? maps.q : $('#mapsQ').value.trim();
   if (!q){ $('#mapsQ').focus(); return; }
-  if (!more){
-    const k = fold(q).replace(/\s+/g, ' ').trim();
-    const prev = mapsHistory().find(x => x.k === k);
-    if (prev && !confirm(`Ya buscaste “${prev.q}” (${fmtStamp(prev.at)}): ${prev.found} resultados, agregaste ${prev.added}.\n\n¿Buscar de nuevo? Gasta 1 búsqueda.`)) return;
+  if (!more && !force){
+    if (!maps.savedLoaded) await loadSaved();
+    if (maps.saved.some(s => s.k === keyOf(q))){ openSaved(keyOf(q)); toast('Abrí tu búsqueda guardada: no gastó búsquedas'); return; }
   }
+  const prevSel = force ? new Set(maps.sel) : null, prevIds = force ? new Set(maps.results.map(r => r.id)) : null;
   maps.loading = true; maps.error = '';
   if (!more){ maps.q = q; maps.results = []; maps.next = null; maps.sel = new Set(); maps.note = ''; }
-  maps.restored = false;
+  maps.restored = false; maps.openedSaved = null;
   renderMaps();
   try{
     let json = await placesSearch(q, more ? maps.next : null);
@@ -1527,29 +1560,40 @@ async function runMapsSearch(more){
       if (maps.results.some(r => r.id === p.id)) continue;
       const c = placeToCand(p);
       maps.results.push(c);
-      if (candState(c, idx) === 'new') maps.sel.add(c.id);
+      if (prevIds && prevIds.has(c.id)){ if (prevSel.has(c.id)) maps.sel.add(c.id); }
+      else if (candState(c, idx) === 'new') maps.sel.add(c.id);
     }
     maps.next = json.nextPageToken || null;
     if (!more) maps.origQ = q;
     const hp = {q: maps.origQ || q, found: maps.results.length}; if (!more) hp.at = new Date().toISOString();
     await recordSearch(maps.origQ || q, hp);
+    await persistSearch();
     maps.debug = (json.places && json.places.length) ? '' : JSON.stringify(json).slice(0, 400);
   }catch(e){ maps.error = e.message; }
   maps.loading = false;
   renderMaps();
 }
 function renderMapsHistory(){
-  const hist = mapsHistory();
+  const hist = mapsHistory(); const saved = maps.saved || []; const idx = mapsIndex();
+  if (!maps.savedLoaded && !maps.savedLoading && sb && user){ maps.savedLoading = true; loadSaved().then(() => { maps.savedLoading = false; renderMapsHistory(); }); }
   const zones = new Map();
   for (const l of crm.leads){ const z = zoneOf(l.location); if (!z) continue; const k = fold(z); if (!zones.has(k)) zones.set(k, [z, 0]); zones.get(k)[1]++; }
   const zl = [...zones.entries()].sort((a, b) => a[1][0].localeCompare(b[1][0], 'es'));
-  $('#mapsHist').querySelector('summary').textContent = `Destinos ya trabajados (${zl.length} zonas en tu CRM${hist.length ? ` · ${hist.length} búsquedas` : ''})`;
+  $('#mapsHist').querySelector('summary').textContent = `Destinos ya trabajados (${zl.length} zonas en tu CRM${saved.length ? ` · ${saved.length} búsquedas guardadas` : ''})`;
   $('#mapsHistBody').innerHTML = `
     <strong style="font-size:14.5px">Zonas que ya tenés en el CRM</strong>
     <div class="quick" style="margin:6px 0 14px">${zl.length ? zl.map(([k, [z, n]]) => `<button class="sm" data-zone="${esc(k)}" title="Ver estos leads en el Pipeline">${esc(z)} <span class="muted">${n}</span></button>`).join('') : '<span class="muted" style="font-size:14.5px">Todavía no hay.</span>'}</div>
-    <strong style="font-size:14.5px">Búsquedas hechas</strong>
-    ${hist.length ? `<div style="margin-top:6px;display:grid;gap:2px">${hist.slice(0, 50).map(h => `<div class="row" style="font-size:15px;padding:5px 0;border-bottom:1px solid var(--border)"><span style="font-weight:500">${esc(h.q)}</span><span class="muted">${esc(fmtStamp(h.at))} · ${h.found} resultados · ${h.added} agregados</span></div>`).join('')}</div>`
-      : '<p class="hint" style="margin:4px 0 0">Desde ahora cada búsqueda queda anotada acá, y si repetís una te avisa antes de gastarla.</p>'}`;
+    <strong style="font-size:14.5px">Búsquedas guardadas</strong>
+    ${!maps.savedLoaded ? '<p class="hint" style="margin:4px 0 0">Cargando…</p>' : saved.length ? `<div style="margin-top:6px;display:grid;gap:2px">${saved.map(s => {
+        const res = s.results || []; const ss = new Set(s.k === keyOf(maps.origQ || '') ? [...maps.sel] : (s.sel || [])); const pend = res.filter(c => ss.has(c.id) && candState(c, idx) === 'new').length; const h = hist.find(x => x.k === s.k);
+        return `<div class="row" style="font-size:15px;padding:7px 0;border-bottom:1px solid var(--border);gap:10px">
+          <span style="font-weight:500">${esc(s.q)}</span>
+          <span class="muted">${esc(fmtStamp(s.updated_at))} · ${res.length} resultados${h && h.added ? ` · ${h.added} agregados` : ''}${pend ? ` · <b style="color:var(--warn)">${pend} tildado${pend === 1 ? '' : 's'} sin agregar</b>` : ' · <b style="color:var(--ok)">✓ revisada</b>'}</span>
+          <span class="spacer"></span>
+          <button class="sm" data-open="${esc(s.k)}">Abrir</button>
+          <button class="ghost sm" data-delsaved="${esc(s.id)}" title="Borrar búsqueda guardada">${ICON.x}</button>
+        </div>`; }).join('')}</div>`
+      : '<p class="hint" style="margin:4px 0 0">Cada búsqueda que hagas queda guardada acá con tus tildes, y la podés reabrir sin gastar búsquedas.</p>'}`;
 }
 const MAPS_STATE = {
   crm: ['Ya en CRM', 'muted'], closed: ['Cerrado', 'reason'], kw: ['Rubro excluido', 'reason'], nophone: ['Sin teléfono', 'muted'], big: ['Muchas reseñas', 'unk'], new: ['Nuevo', 'wa']
@@ -1569,6 +1613,7 @@ function renderMaps(){
   const box = $('#mapsResults');
   const err = (maps.error ? `<div class="banner" style="background:var(--danger-soft);color:var(--danger);margin:0 0 12px">${esc(maps.error)}</div>` : '')
     + (maps.note && !maps.error ? `<p class="hint" style="margin:0 0 10px">ℹ️ ${esc(maps.note)}</p>` : '')
+    + (maps.openedSaved && maps.results.length && !maps.loading ? `<div class="row" style="margin:0 0 10px;gap:10px"><span class="hint" style="margin:0">📁 Búsqueda guardada · última vez ${esc(fmtStamp(maps.openedSaved))}. No gastó búsquedas.</span><button class="sm" id="mapsRefresh">Actualizar desde Google (gasta 1)</button></div>` : '')
     + (maps.restored && maps.results.length && !maps.loading ? `<p class="hint" style="margin:0 0 10px">↺ Esta es tu última búsqueda, con lo que tenías tildado. No gastó ninguna búsqueda nueva.</p>` : '');
   if (!maps.results.length){
     box.innerHTML = err + (maps.loading ? '<div class="empty-state">Buscando en Google Maps…</div>'
@@ -1620,11 +1665,14 @@ async function addMapsToCRM(){
   if (error){ toast('Error al agregar: ' + error.message); renderMaps(); return; }
   crm.leads = crm.leads.concat((data || []).filter(a => !crm.leads.some(l => l.id === a.id)));
   maps.sel = new Set();
+  persistSearch();
   if (maps.origQ){ const it = mapsHistory().find(x => x.k === fold(maps.origQ).replace(/\s+/g, ' ').trim()); await recordSearch(maps.origQ, {added: ((it && it.added) || 0) + (data || []).length}); }
   renderMaps();
   toast(`${(data || []).length} agregado${(data || []).length === 1 ? '' : 's'} al CRM · están en Pipeline → Nuevo`);
 }
 $('#mapsHistBody').addEventListener('click', e => {
+  const o = e.target.closest('[data-open]'); if (o){ openSaved(o.dataset.open); return; }
+  const d = e.target.closest('[data-delsaved]'); if (d){ deleteSaved(d.dataset.delsaved); return; }
   const b = e.target.closest('[data-zone]'); if (!b) return;
   crm.zone = b.dataset.zone; store('zone', crm.zone); crm.filter = 'todos'; setTab('pipe');
 });
@@ -1633,6 +1681,7 @@ $('#mapsResults').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
   if (b.dataset.mq){ $('#mapsQ').value = b.dataset.mq; runMapsSearch(false); }
   else if (b.id === 'mapsMore') runMapsSearch(true);
+  else if (b.id === 'mapsRefresh'){ $('#mapsQ').value = maps.origQ || maps.q; runMapsSearch(false, true); }
   else if (b.id === 'mapsAdd') addMapsToCRM();
 });
 $('#mapsResults').addEventListener('change', e => {
@@ -1640,9 +1689,9 @@ $('#mapsResults').addEventListener('change', e => {
   if (t.id === 'mapsAll'){
     const idx = mapsIndex();
     for (const c of maps.results) if (candState(c, idx) === 'new'){ t.checked ? maps.sel.add(c.id) : maps.sel.delete(c.id); }
-    renderMaps(); return;
+    renderMaps(); persistSearchSoon(); return;
   }
-  if (t.dataset.pid){ t.checked ? maps.sel.add(t.dataset.pid) : maps.sel.delete(t.dataset.pid); renderMaps(); }
+  if (t.dataset.pid){ t.checked ? maps.sel.add(t.dataset.pid) : maps.sel.delete(t.dataset.pid); renderMaps(); persistSearchSoon(); }
 });
 let maxRevT;
 function applyMaxRev(){
@@ -1652,7 +1701,7 @@ function applyMaxRev(){
   store('maxRev', nv);
   const idx = mapsIndex();
   for (const c of maps.results){ const s = candState(c, idx); if (s === 'new') maps.sel.add(c.id); else if (s === 'big') maps.sel.delete(c.id); }
-  renderMaps();
+  renderMaps(); persistSearchSoon();
 }
 $('#mapsMaxRev').addEventListener('input', () => { clearTimeout(maxRevT); maxRevT = setTimeout(applyMaxRev, 350); });
 $('#mapsKeySave').addEventListener('click', async () => {
