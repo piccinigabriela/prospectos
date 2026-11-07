@@ -1,0 +1,1836 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prospectos</title>
+<meta name="theme-color" content="#0E151C">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<style>
+/* Paleta "Bruma" — alto contraste, sin grises apagados */
+:root{
+  --bg:#F1F4F7; --surface:#FFFFFF; --surface-2:#E6ECF2; --text:#111A23; --muted:#33475B; --border:#CDD6E0;
+  --accent:#2F5D8C; --accent-ink:#FFFFFF; --accent-soft:#DCE7F3;
+  --ok:#1F6B4E; --ok-soft:#DDF1E8;
+  --warn:#7A5300; --warn-soft:#F8EBCF; --danger:#A3271B; --danger-soft:#F9E0DC; --neutral-soft:#E3E9EF;
+  --blue:#1F4F80; --blue-soft:#DCE7F3; --violet:#5B3FA0; --violet-soft:#ECE5FA;
+  --radius:12px; --shadow:0 10px 40px rgba(15,25,35,.18);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0E151C; --surface:#18222D; --surface-2:#1F2A36; --text:#F4F7FA; --muted:#C8D6E5; --border:#2A3846;
+    --accent:#8DB8E6; --accent-ink:#0B1620; --accent-soft:#22344A;
+    --ok:#A8EBCF; --ok-soft:#1E3B33;
+    --warn:#F6D594; --warn-soft:#3F3320; --danger:#FFB4A6; --danger-soft:#45201C; --neutral-soft:#243140;
+    --blue:#D6E6F8; --blue-soft:#2A3F57; --violet:#DCCFFF; --violet-soft:#352C4F;
+    --shadow:0 10px 40px rgba(0,0,0,.55);
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--text);font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+[hidden]{display:none !important}
+a{color:inherit}
+button,.btn{font:inherit;font-size:15px;border-radius:9px;border:1px solid var(--border);background:var(--surface);color:var(--text);padding:8px 14px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;text-decoration:none;white-space:nowrap}
+button:hover,.btn:hover{background:var(--surface-2)}
+button.primary,.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
+button.primary:hover,.btn.primary:hover{filter:brightness(1.07)}
+button:disabled{opacity:.45;cursor:not-allowed}
+button.ghost{border-color:transparent;background:transparent;padding:6px 8px;color:var(--muted)}
+button.ghost:hover{background:var(--surface-2);color:var(--text)}
+button.danger{color:var(--danger);border-color:var(--danger-soft)}
+button.danger:hover{background:var(--danger-soft)}
+input,select,textarea{font:inherit;font-size:15px;color:var(--text);background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:8px 10px;min-width:0}
+::placeholder{color:var(--muted);opacity:.8}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+button:focus-visible,a:focus-visible,.chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+textarea{width:100%;resize:vertical}
+svg{width:16px;height:16px;flex:none}
+.wrap{max-width:1180px;margin:0 auto;padding:0 16px}
+.muted{color:var(--muted)}
+.hint{color:var(--muted);font-size:14.5px;margin:6px 0 0}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.spacer{flex:1}
+
+/* Login */
+.login{min-height:100vh;display:grid;place-items:center;padding:16px}
+.login form{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px 24px;width:100%;max-width:360px;display:grid;gap:12px}
+.login h1{margin:0;font-size:22px}
+.login label{display:grid;gap:4px;font-size:14.5px;color:var(--muted)}
+.login .err{color:var(--danger);font-size:15px;min-height:1.2em;margin:0}
+.login .err:empty{display:none}
+.login .ok{background:var(--ok-soft);color:var(--ok);border-radius:9px;padding:10px 12px;font-size:15px;margin:0}
+
+/* Header */
+.top{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
+.top .wrap{display:flex;align-items:center;gap:16px;height:58px}
+.brand{font-weight:700;font-size:17px;letter-spacing:-.01em}
+.tabs{display:flex;gap:4px;background:var(--surface-2);padding:3px;border-radius:10px}
+.tabs button{border:0;background:transparent;padding:6px 14px;border-radius:8px;color:var(--muted);font-weight:500}
+.tabs button.on{background:var(--surface);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.user{font-size:14.5px;color:var(--muted)}
+@media (max-width:640px){.user-mail{display:none}.top .wrap{gap:10px}.brand{font-size:16px}}
+@media (max-width:440px){.brand{display:none}.tabs button{padding:6px 10px}.tab-long{display:none}.top .wrap{gap:6px}}
+
+main{padding:20px 0 80px}
+
+/* Chips */
+.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:12px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{border-radius:999px;padding:6px 12px;font-size:15px;border:1px solid var(--border);background:var(--surface);color:var(--text);flex:none}
+.chip b{font-weight:600;margin-left:4px;color:var(--muted);font-variant-numeric:tabular-nums}
+.chip.on{background:var(--text);color:var(--bg);border-color:var(--text)}
+.chip.on b{color:inherit;opacity:.7}
+.chip.hot b{color:var(--danger)}
+.chip.on.hot b{color:inherit}
+
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.toolbar input[type=search]{flex:1 1 220px;max-width:340px}
+
+/* Lists */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+table{width:100%;border-collapse:collapse}
+th{font-size:13.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);text-align:left;font-weight:600;padding:10px 14px;border-bottom:1px solid var(--border);background:var(--surface-2);white-space:nowrap}
+td{padding:11px 14px;border-bottom:1px solid var(--border);vertical-align:top}
+tr:last-child td{border-bottom:0}
+tbody.click tr{cursor:pointer}
+tbody.click tr:hover td{background:var(--surface-2)}
+tr.sel td{background:var(--accent-soft) !important}
+tr.sel td:first-child{box-shadow:inset 4px 0 0 var(--accent)}
+.name{font-weight:600}
+.meta{color:var(--muted);font-weight:450;font-size:14.5px;margin-top:1px}
+.num{font:15px ui-monospace,SFMono-Regular,Menlo,monospace;font-variant-numeric:tabular-nums;white-space:nowrap}
+.phone{display:flex;align-items:center;gap:6px;white-space:nowrap}
+a.ic{display:inline-flex;color:var(--accent);padding:5px;border-radius:7px}
+a.ic svg{width:19px;height:19px}
+a.weblink{display:inline-flex;align-items:center;gap:5px;color:var(--accent);text-decoration:underline;text-underline-offset:3px;font-size:15px;word-break:break-all}
+a.weblink:hover{color:var(--text)}
+a.weblink svg{width:15px;height:15px}
+a.ic:hover{background:var(--accent-soft)}
+.empty-state{padding:36px 16px;text-align:center;color:var(--muted)}
+.overdue{color:var(--danger);font-weight:600}
+.today{color:var(--warn);font-weight:600}
+
+.tag{font-size:13px;font-weight:600;border-radius:999px;padding:1px 8px;white-space:nowrap;display:inline-block}
+.tag.wa{background:var(--ok-soft);color:var(--ok)}
+.tag.unk{background:var(--warn-soft);color:var(--warn)}
+.tag.fijo,.tag.intl,.tag.muted{background:var(--neutral-soft);color:var(--text)}
+.tag.reason{background:var(--danger-soft);color:var(--danger)}
+.st{font-size:14px;font-weight:600;border-radius:999px;padding:2px 10px;white-space:nowrap;display:inline-block}
+.st-nuevo{background:var(--neutral-soft);color:var(--text)}
+.st-contactado{background:var(--blue-soft);color:var(--blue)}
+.st-sin_respuesta{background:var(--warn-soft);color:var(--warn)}
+.st-interesado{background:var(--ok-soft);color:var(--ok)}
+.st-demo{background:var(--violet-soft);color:var(--violet)}
+.st-cliente{background:var(--ok);color:var(--surface)}
+.st-perdido{background:var(--danger-soft);color:var(--danger)}
+
+@media (max-width:760px){
+  table.resp,table.resp thead,table.resp tbody,table.resp tr,table.resp td{display:block}
+  table.resp thead{display:none}
+  table.resp tr{border-bottom:1px solid var(--border);padding:8px 0}
+  table.resp tr:last-child{border-bottom:0}
+  table.resp td{border:0;padding:3px 14px}
+  table.resp td.hide-m{display:none}
+  table.resp td[data-l]::before{content:attr(data-l)" ";font-size:13.5px;color:var(--muted)}
+}
+
+/* Drawer */
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.28);z-index:40;opacity:0;pointer-events:none;transition:opacity .2s}
+.scrim.on{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(520px,100%);background:var(--surface);z-index:50;box-shadow:var(--shadow);transform:translateX(102%);transition:transform .22s ease;display:flex;flex-direction:column}
+.drawer.on{transform:none}
+.d-head{display:flex;align-items:flex-start;gap:8px;padding:16px 16px 8px;border-bottom:1px solid var(--border)}
+.d-head input{flex:1;font-size:19px;font-weight:700;border-color:transparent;background:transparent;padding:4px 6px;margin-left:-6px}
+.d-head input:hover{background:var(--surface-2)}
+.d-body{flex:1;overflow-y:auto;padding:14px 16px 40px}
+.d-sec{margin-top:18px}
+.d-sec h3{font-size:13.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:0 0 8px;font-weight:600}
+.contact-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:6px}
+.contact-row .num{margin-right:2px}
+.btn.sm,button.sm{padding:5px 10px;font-size:14.5px;border-radius:8px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.grid2 label,.field{display:grid;gap:4px;font-size:14px;color:var(--muted)}
+.quick{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.seg{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px}
+.seg button{padding:5px 10px;font-size:14.5px;border-radius:999px}
+.seg button.on{background:var(--text);color:var(--bg);border-color:var(--text)}
+.timeline{display:grid;gap:2px}
+.note{display:grid;grid-template-columns:28px 1fr auto;gap:8px;padding:10px 0;border-bottom:1px solid var(--border)}
+.note:last-child{border-bottom:0}
+.note .k{width:28px;height:28px;border-radius:50%;background:var(--surface-2);display:grid;place-items:center;font-size:15px}
+.note .when{font-size:14px;color:var(--muted)}
+.note .body{white-space:pre-wrap;word-break:break-word}
+.note button{opacity:0;transition:opacity .15s}
+.note:hover button{opacity:1}
+@media (hover:none){.note button{opacity:.6}}
+details.more>summary{cursor:pointer;color:var(--muted);font-size:14.5px;list-style:none}
+details.more>summary::-webkit-details-marker{display:none}
+details.more>summary::before{content:"› ";display:inline-block;transition:transform .15s}
+details.more[open]>summary::before{transform:rotate(90deg)}
+
+/* Import view */
+.drop{border:2px dashed var(--border);border-radius:var(--radius);background:var(--surface);padding:24px 18px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s}
+.drop:hover,.drop.over{border-color:var(--accent);background:var(--accent-soft)}
+.drop strong{display:block;font-size:16px;margin-bottom:2px}
+.drop span{color:var(--muted);font-size:15px}
+details.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-top:10px}
+details.panel>summary{cursor:pointer;padding:11px 16px;font-size:15px;font-weight:600;list-style:none;display:flex;align-items:center;gap:8px}
+details.panel>summary::-webkit-details-marker{display:none}
+details.panel>summary::before{content:"›";display:inline-block;transition:transform .15s;color:var(--muted);font-size:18px;line-height:1}
+details.panel[open]>summary::before{transform:rotate(90deg)}
+.panel-body{padding:0 16px 16px}
+.panel-body textarea{font:14.5px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--bg)}
+label.check{display:flex;gap:8px;align-items:center;font-size:15px;margin-top:10px}
+.settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media (max-width:720px){.settings-grid{grid-template-columns:1fr}}
+.banner{margin-top:12px;padding:10px 14px;border-radius:10px;background:var(--warn-soft);color:var(--warn);font-size:15px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:18px 0 12px}
+@media (max-width:720px){.stats{grid-template-columns:repeat(2,1fr)}}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:11px 14px}
+.stat b{display:block;font-size:22px;line-height:1.15;font-variant-numeric:tabular-nums}
+.stat span{color:var(--muted);font-size:14.5px}
+h2{font-size:16px;margin:26px 0 10px}
+[contenteditable]{outline:none;border-radius:4px;padding:1px 3px;margin:-1px -3px}
+[contenteditable]:hover{background:var(--surface-2)}
+[contenteditable]:focus{background:var(--surface-2);box-shadow:0 0 0 2px var(--accent)}
+
+dialog{border:1px solid var(--border);border-radius:16px;padding:0;background:var(--surface);color:var(--text);width:min(440px,calc(100% - 32px));box-shadow:var(--shadow)}
+dialog::backdrop{background:rgba(0,0,0,.3)}
+dialog form{padding:20px;display:grid;gap:12px}
+dialog h3{margin:0;font-size:17px}
+dialog label{display:grid;gap:4px;font-size:14.5px;color:var(--muted)}
+
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(20px);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:15px;opacity:0;transition:.2s;pointer-events:none;max-width:calc(100% - 32px);z-index:90}
+.toast.show{opacity:1;transform:translateX(-50%)}
+.loading{padding:60px 16px;text-align:center;color:var(--muted)}
+</style>
+</head>
+<body>
+
+<!-- Login -->
+<section class="login" id="vLogin" hidden>
+  <form id="loginForm">
+    <div>
+      <h1>Prospectos</h1>
+      <p class="muted" style="margin:4px 0 0;font-size:15px">Te mandamos un link a tu email para entrar.</p>
+    </div>
+    <label>Email<input type="email" id="lEmail" autocomplete="username" required></label>
+    <label id="passWrap" hidden>Contraseña<input type="password" id="lPass" autocomplete="current-password"></label>
+    <p class="err" id="lErr"></p>
+    <p class="ok" id="lOk" hidden></p>
+    <button class="primary" type="submit" id="lBtn">Enviarme el link</button>
+    <button type="button" class="ghost" id="lMode" style="justify-self:center;font-size:14.5px">Entrar con contraseña</button>
+  </form>
+</section>
+
+<div class="loading" id="vBoot">Cargando…</div>
+
+<!-- App -->
+<div id="vApp" hidden>
+  <header class="top">
+    <div class="wrap">
+      <span class="brand">Prospectos</span>
+      <nav class="tabs">
+        <button data-tab="pipe" class="on">Pipeline</button>
+        <button data-tab="maps"><span class="tab-long">Buscar en </span>Maps</button>
+        <button data-tab="imp">Importar</button>
+      </nav>
+      <span class="spacer"></span>
+      <button class="ghost" id="btnSettings" title="Ajustes">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
+      <span class="user"><span class="user-mail" id="uMail"></span> <button class="ghost sm" id="btnLogout">Salir</button></span>
+    </div>
+  </header>
+
+  <!-- Pipeline -->
+  <main class="wrap" id="vPipe">
+    <div class="chips" id="chips"></div>
+    <div class="toolbar">
+      <input type="search" id="pq" placeholder="Buscar nombre, teléfono, zona…">
+      <select id="pZone" aria-label="Zona" style="max-width:220px"></select>
+      <select id="pSort" aria-label="Ordenar">
+        <option value="next">Ordenar: próxima acción</option>
+        <option value="zone">Ordenar: zona</option>
+        <option value="name">Ordenar: nombre</option>
+        <option value="recent">Ordenar: recién agregados</option>
+      </select>
+      <span class="spacer"></span>
+      <button id="btnExport" class="sm">Exportar CSV</button>
+      <button id="btnNew" class="primary sm">+ Nuevo lead</button>
+    </div>
+    <div class="card">
+      <table class="resp">
+        <thead><tr><th>Complejo</th><th>Teléfono</th><th>Estado</th><th>Último contacto</th><th>Próxima acción</th></tr></thead>
+        <tbody id="tbPipe" class="click"></tbody>
+      </table>
+    </div>
+    <p class="hint" id="pipeHint"></p>
+  </main>
+
+  <!-- Maps search -->
+  <main class="wrap" id="vMaps" hidden>
+    <div id="mapsSetup" class="card" style="padding:18px" hidden>
+      <strong>Conectá tu clave de Google</strong>
+      <p class="hint" style="margin:4px 0 12px">Pegá la clave de API “CRM Prospectos – Places” (empieza con AIza…). Se guarda en tu cuenta y queda disponible en todos tus dispositivos.</p>
+      <div class="row"><input id="mapsKeyInput" placeholder="AIza…" style="flex:1 1 280px;font-family:ui-monospace,monospace" autocomplete="off" spellcheck="false"><button class="primary" id="mapsKeySave">Guardar clave</button></div>
+    </div>
+    <div id="mapsMain" hidden>
+      <form class="row" id="mapsForm" style="margin-bottom:6px">
+        <input id="mapsQ" placeholder="cabañas Tandil" style="flex:1 1 240px" autocomplete="off">
+        <button class="primary" id="mapsGo" type="submit">Buscar</button>
+      </form>
+      <div class="row" style="margin:0 0 6px;font-size:15px;color:var(--muted)">
+        <label class="row" style="gap:6px">Destildar los que tengan más de <input id="mapsMaxRev" type="number" min="0" step="50" style="width:80px;padding:4px 8px"> reseñas</label>
+        <span class="hint" style="margin:0">(suelen ser hoteles grandes; vacío = no filtrar)</span>
+      </div>
+      <p class="hint" id="mapsUsage" style="margin:0 0 10px"></p>
+      <details class="panel" id="mapsHist" style="margin:0 0 14px"><summary>Destinos ya trabajados</summary><div class="panel-body" id="mapsHistBody"></div></details>
+      <div id="mapsResults"></div>
+    </div>
+  </main>
+
+  <!-- Import -->
+  <main class="wrap" id="vImp" hidden>
+    <input type="file" id="file" multiple hidden>
+    <div id="drop" class="drop" tabindex="0" role="button">
+      <strong>Arrastrá el CSV o el .txt acá, o hacé clic para elegirlo</strong>
+      <span>Instagram, Google Maps, PhantomBuster (también lo copiado de la consola).</span>
+    </div>
+    <details class="panel" id="pastePanel">
+      <summary>Pegar texto en vez de subir archivo</summary>
+      <div class="panel-body">
+        <textarea id="pasteArea" rows="6" placeholder="Pegá acá el contenido"></textarea>
+        <div class="row" style="margin-top:8px"><button id="btnPaste" class="primary">Procesar texto</button></div>
+      </div>
+    </details>
+    <details class="panel">
+      <summary>Reglas de filtrado</summary>
+      <div class="panel-body settings-grid">
+        <div>
+          <strong style="font-size:15px">Rubros a descartar</strong>
+          <p class="hint" style="margin:2px 0 8px">Una palabra o frase por línea; sin importar tildes ni mayúsculas.</p>
+          <textarea id="kw" rows="8"></textarea>
+        </div>
+        <div>
+          <strong style="font-size:15px">Opciones</strong>
+          <label class="check"><input type="checkbox" id="optFijos"> Descartar los que solo tienen teléfono fijo</label>
+          <label class="check"><input type="checkbox" id="optUnconfirmed"> Descartar números sin confirmar como WhatsApp</label>
+        </div>
+      </div>
+    </details>
+    <div id="banners"></div>
+
+    <section id="impResults" hidden>
+      <div class="stats">
+        <div class="stat"><b id="iValid">0</b><span>Leads válidos</span></div>
+        <div class="stat"><b id="iNew">0</b><span>Nuevos para el CRM</span></div>
+        <div class="stat"><b id="iDup">0</b><span>Ya en el CRM o repetidos</span></div>
+        <div class="stat"><b id="iDisc">0</b><span>Descartados</span></div>
+      </div>
+      <div class="toolbar">
+        <button id="btnAdd" class="primary">Agregar al CRM</button>
+        <span class="spacer"></span>
+        <button id="btnClearImp" class="ghost">Vaciar</button>
+      </div>
+      <div class="card">
+        <table class="resp">
+          <thead><tr><th>Complejo</th><th>Teléfono</th><th>Web</th><th></th><th></th></tr></thead>
+          <tbody id="tbImp"></tbody>
+        </table>
+      </div>
+      <p class="hint">Hacé clic en el nombre para corregirlo. Los que ya están en el CRM (mismo teléfono) no se duplican.</p>
+      <h2>Descartados <span class="muted" id="cDisc"></span></h2>
+      <div class="card">
+        <table class="resp">
+          <thead><tr><th>Nombre</th><th>Motivo</th><th>Detalle</th><th></th></tr></thead>
+          <tbody id="tbDisc"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- Drawer -->
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" aria-hidden="true">
+  <div class="d-head">
+    <input id="dName" aria-label="Nombre del complejo">
+    <button class="ghost" id="dClose" title="Cerrar (Esc)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+  </div>
+  <div class="d-body" id="dBody"></div>
+</aside>
+
+<!-- New lead -->
+<dialog id="dlgNew">
+  <form method="dialog" id="newForm">
+    <h3>Nuevo lead</h3>
+    <label>Nombre del complejo<input id="nName" required></label>
+    <label>Teléfono / WhatsApp<input id="nPhone" inputmode="tel" placeholder="Ej: 260 15 451-3151"></label>
+    <label>Zona<input id="nLoc" placeholder="Ej: San Rafael"></label>
+    <div class="row" style="justify-content:flex-end"><button value="cancel" formnovalidate>Cancelar</button><button class="primary" value="ok">Crear</button></div>
+  </form>
+</dialog>
+
+<!-- Settings -->
+<dialog id="dlgSettings">
+  <form method="dialog">
+    <h3>Ajustes</h3>
+    <label>Mensaje inicial de WhatsApp
+      <textarea id="sTemplate" rows="5" placeholder="Hola! Soy Gabi de Loomi Suite. Vi {nombre} y quería contarte…"></textarea>
+    </label>
+    <p class="hint" style="margin-top:-6px">Se carga en el chat al tocar el botón de WhatsApp. <b>{nombre}</b> se reemplaza por el nombre del complejo. Dejalo vacío para abrir el chat sin texto.</p>
+    <label>Contraseña para entrar al CRM (opcional)
+      <input id="sPass" type="password" autocomplete="new-password" placeholder="Dejalo vacío para no cambiarla">
+    </label>
+    <p class="hint" style="margin-top:-6px">Te sirve para entrar sin esperar el mail; Chrome te ofrece guardarla. Es la misma cuenta que usás en checkinn.com.ar. Mínimo 8 caracteres.</p>
+    <label>Clave de Google (Buscar en Maps)
+      <input id="sMapsKey" placeholder="AIza…" style="font-family:ui-monospace,monospace" autocomplete="off" spellcheck="false">
+    </label>
+    <label>Límite de búsquedas por mes
+      <input id="sMapsLimit" type="number" min="1" step="1" placeholder="1000">
+    </label>
+    <p class="hint" style="margin-top:-6px">Cada página de 20 resultados cuenta como 1 búsqueda. Google regala 1.000 por mes; el CRM frena antes de pasarse.</p>
+    <div class="row" style="justify-content:flex-end"><button class="primary" value="ok">Listo</button></div>
+  </form>
+</dialog>
+
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+/* ===== Motor de filtrado (igual que filtro-leads.html) ===== */
+/* ---------- Config ---------- */
+const DEFAULT_KW = [
+  'carnicer','frigorific','carne de cerdo','carne vacuna','cortes de carne','porcin','reproductores',
+  'constructora','construccion de cabanas','construimos','llave en mano','steel frame','premoldead',
+  'aserradero','fabricamos','venta de cabanas','remate'
+].join('\n');
+
+const GENERIC_HOSTS = ['instagram.com','facebook.com','fb.com','fb.me','wa.me','whatsapp.com','wa.link','linktr.ee',
+  'linktree','tiktok.com','youtube.com','youtu.be','twitter.com','x.com','threads.net','booking.com','airbnb.',
+  'tripadvisor.','despegar.com','mercadolibre.','trivago.','google.','goo.gl','g.page','maps.app','alquilerargentina.com',
+  'phbuster.io','phantombuster','cdninstagram.com','fbcdn.net','bit.ly','beacons.ai','taplink','gmail.com',
+  'hotmail.com','yahoo.com','outlook.com','canva.site'];
+
+const PORTAL_MAIL = ['alquilerargentina.com','booking.com','airbnb.com','despegar.com','tripadvisor.com','hotelonia.com','phantombuster.com','sentry.io','wixpress.com','example.com'];
+
+const AREA3 =new Set(['220','221','223','230','236','237','249','260','261','263','264','266','280','291','294','297',
+  '298','299','341','342','343','345','348','351','353','358','362','364','370','376','379','380','381','383','385','387','388']);
+
+const HEAD = {
+  name: ['fullname','name','nombre','title','titulo','businessname','placename','nombredelcomplejo','razonsocial','nombrecomplejo'],
+  user: ['username','usuario','instagramusername','handle'],
+  phone: ['phone','phonenumber','phones','telefono','tel','celular','whatsapp','phoneunformatted','internationalphonenumber','telefonowhatsapp'],
+  web: ['website','site','web','sitioweb','paginaweb','externalurl','domain','sitio','websiteurl'],
+  text: ['description','descripcion','bio','biography','caption','text','about','category','categoryname','categoria','subtitle','categories'],
+  email: ['email','emails','correo','mail','publicemail'],
+  profile: ['profileurl','instagramurl'],
+  post: ['posturl','url','placeurl','googlemapsurl'],
+  location: ['location','address','direccion','ubicacion','city','ciudad','fulladdress','street']
+};
+
+/* ---------- Utils ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fold = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+const normHead = s => fold(s).replace(/[^a-z0-9]/g, '');
+
+function store(k, v){ try{ localStorage.setItem('filtroLeads.' + k, JSON.stringify(v)); }catch(e){} }
+function load(k, d){ try{ const v = localStorage.getItem('filtroLeads.' + k); return v == null ? d : JSON.parse(v); }catch(e){ return d; } }
+
+let toastT;
+function toast(msg){ const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2400); }
+
+/* Fixes double-encoded UTF-8 ("CabaÃ±as" -> "Cabañas") */
+const CP1252 = {0x20AC:0x80,0x201A:0x82,0x0192:0x83,0x201E:0x84,0x2026:0x85,0x2020:0x86,0x2021:0x87,0x02C6:0x88,0x2030:0x89,
+  0x0160:0x8A,0x2039:0x8B,0x0152:0x8C,0x017D:0x8E,0x2018:0x91,0x2019:0x92,0x201C:0x93,0x201D:0x94,0x2022:0x95,0x2013:0x96,
+  0x2014:0x97,0x02DC:0x98,0x2122:0x99,0x0161:0x9A,0x203A:0x9B,0x0153:0x9C,0x017E:0x9E,0x0178:0x9F};
+const MOJI_RUN = /[\u0080-ÿŒœŠšŸŽžƒˆ˜–—‘-‚“-„†-•…‰‹›€™]{2,}/g;
+const utf8 = new TextDecoder('utf-8', {fatal: true});
+function fixMojibake(s){
+  if (!s || !/[ÃÂâð][\u0080-¿Œ-™]/.test(s)) return s;
+  for (let pass = 0; pass < 3; pass++){
+    let changed = false;
+    s = s.replace(MOJI_RUN, run => {
+      const bytes = [];
+      for (const ch of run){ const c = ch.codePointAt(0); bytes.push(c < 0x100 ? c : CP1252[c]); }
+      try{ const out = utf8.decode(new Uint8Array(bytes)); if (out !== run){ changed = true; return out; } }catch(e){}
+      return run;
+    });
+    if (!changed) break;
+  }
+  return s;
+}
+
+/* ---------- CSV ---------- */
+function parseCSV(text){
+  text = text.replace(/^﻿/, '');
+  const nl = text.indexOf('\n');
+  const first = nl === -1 ? text : text.slice(0, nl);
+  const counts = {',':0, ';':0, '\t':0}; let q = false;
+  for (const ch of first){ if (ch === '"') q = !q; else if (!q && ch in counts) counts[ch]++; }
+  let delim = ','; let best = 0;
+  for (const [k, v] of Object.entries(counts)) if (v > best){ best = v; delim = k; }
+
+  const rows = []; let row = [], field = '', inQ = false;
+  for (let i = 0; i < text.length; i++){
+    const c = text[i];
+    if (inQ){
+      if (c === '"'){ if (text[i+1] === '"'){ field += '"'; i++; } else inQ = false; }
+      else field += c;
+      continue;
+    }
+    if (c === '"' && field === ''){ inQ = true; continue; }
+    if (c === delim){ row.push(field); field = ''; continue; }
+    if (c === '\r') continue;
+    if (c === '\n'){ row.push(field); rows.push(row); row = []; field = ''; continue; }
+    field += c;
+  }
+  if (field !== '' || row.length){ row.push(field); rows.push(row); }
+  return rows;
+}
+
+/* ---------- Phones (Argentina) ---------- */
+function areaLen(d){ if (d.startsWith('11')) return 2; if (AREA3.has(d.slice(0, 3))) return 3; return 4; }
+
+function normAR(raw){
+  let plus = /^\s*\+/.test(raw);
+  let d = String(raw).replace(/\D/g, '');
+  let mobile = false;
+  if (d.startsWith('00')){ d = d.slice(2); plus = true; }
+  if (d.startsWith('54') && (plus || d.length >= 12)){
+    d = d.slice(2);
+    if (d.startsWith('9')){ d = d.slice(1); mobile = true; }
+  }
+  if (d.startsWith('0')) d = d.slice(1);
+  if (d.length === 10 && d.startsWith('15')){ d = '11' + d.slice(2); mobile = true; }
+  if (d.length === 12){
+    const a = areaLen(d);
+    if (d.substr(a, 2) === '15'){ d = d.slice(0, a) + d.slice(a + 2); mobile = true; }
+  }
+  const ok = d.length === 10 && /^(11|2|3)/.test(d);
+  return {ok, nsn: d, mobile};
+}
+
+const WA_CTX = /(whats|wsp|wpp|wapp|\bwa\b|\bcel\b|celu|celular|m[oó]vil|📲|📱)/iu;
+const FIJO_CTX = /(fijo|l[ií]nea fija|☎)/iu;
+const HINT_CTX = /(tel|whats|wsp|wpp|cel|llam|reserv|consult|contact|info|escrib|📞|📲|📱|☎)/iu;
+const RANK = {wa: 3, intl: 2, unk: 2, fijo: 1};
+
+function extractPhones(text, fromColumn){
+  const phones = [], incomplete = [];
+  if (!text) return {phones, incomplete};
+  const t = String(text).normalize('NFKC');
+  const push = (nsn, kind, raw) => {
+    const ex = phones.find(p => p.nsn === nsn);
+    if (ex){ if (RANK[kind] > RANK[ex.kind]) ex.kind = kind; return; }
+    phones.push({nsn, kind, raw});
+  };
+  for (const m of t.matchAll(/(?:wa\.me\/|whatsapp\.com\/send\/?\?phone=)\+?(\d{8,15})/gi)){
+    const n = normAR('+' + m[1]); if (n.ok) push(n.nsn, 'wa', m[0]);
+  }
+  const re = /\+?\(?\d[\d \t \-().]{5,22}\d/g;
+  for (const m of t.matchAll(re)){
+    const i = m.index, raw = m[0];
+    const prev = t[i - 1] || ' ';
+    if (/[\p{L}_@#=&%$\d]/u.test(prev)) continue;
+    const tokStart = t.slice(0, i).search(/\S*$/);
+    const token = t.slice(tokStart, i);
+    if (/(https?:|www\.|\.[a-z]{2,}\/|[a-z]\/|=)/i.test(token)) continue;
+    const ls = t.lastIndexOf('\n', i - 1) + 1;
+    let before = t.slice(ls, i);
+    if (!before.trim() && ls > 0){ const pls = t.lastIndexOf('\n', ls - 2) + 1; before = t.slice(pls, ls); }
+    before = before.slice(-80);
+    if (/\$\s*$/.test(before)) continue;
+    const n = normAR(raw);
+    const digits = raw.replace(/\D/g, '');
+    if (n.ok){
+      let kind = 'unk';
+      if (n.mobile || WA_CTX.test(before)) kind = 'wa';
+      else if (FIJO_CTX.test(before)) kind = 'fijo';
+      push(n.nsn, kind, raw.trim());
+    } else if (/^\s*\+/.test(raw) && !digits.startsWith('54') && digits.length >= 9 && digits.length <= 15){
+      push(digits, 'intl', raw.trim());
+    } else if (digits.length >= 7 && digits.length <= 9 && (fromColumn || HINT_CTX.test(before))){
+      incomplete.push(raw.trim());
+    }
+  }
+  return {phones, incomplete};
+}
+const fmtPhone = p => p.kind === 'intl' ? '+' + p.nsn : (p.kind === 'fijo' ? '+54' : '+549') + p.nsn;
+
+/* ---------- Webs ---------- */
+const URL_RE = /(?:https?:\/\/)?(?:www\.)?[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)*\.(?:com\.ar|net\.ar|org\.ar|tur\.ar|gob\.ar|com|net|org|ar|info|travel|site|online|store|tur|uy|cl|app|io)(?![a-z0-9-])(?:\/[^\s"'<>)\]]*)?/gi;
+function toWeb(u){
+  if (!/^https?:\/\//i.test(u)) u = 'https://' + u;
+  let host;
+  try{ host = new URL(u).hostname.toLowerCase(); }catch(e){ return null; }
+  if (!host.includes('.') || GENERIC_HOSTS.some(g => host.includes(g))) return null;
+  return {key: host.replace(/^www\./, ''), url: 'https://' + host};
+}
+function extractWebs(text, fromColumn){
+  const out = [];
+  if (!text) return out;
+  const t = String(text).normalize('NFKC');
+  if (fromColumn && !/\s/.test(t.trim()) && /\./.test(t)){ const w = toWeb(t.trim()); if (w) out.push(w); return out; }
+  for (const m of t.matchAll(URL_RE)){
+    const prev = t[m.index - 1] || ' ';
+    if (/[@\w.\-\/#]/.test(prev)) continue;
+    const w = toWeb(m[0]); if (w && !out.some(o => o.key === w.key)) out.push(w);
+  }
+  return out;
+}
+
+/* ---------- Names ---------- */
+const LODGE_RE = /(caba[nñ]a|complejo|hoster[ií]a|posada|apart|departament|bungalow|lodge|hotel|chalet|domo|glamping|quinta|estancia|granja|refugio|camping|d[uú]plex|alojamiento|hospedaje|casa|villa|resort|loft|rancho|chacra|cottage)/i;
+const NAME_IN_TEXT = /(?<![#@\p{L}])(Caba[ñn]as?|Complejo|Hoster[ií]a|Posada|Apart(?:\s?[Hh]otel)?|Bungalows?|Lodge|Chalets?|Domos|Glamping|Estancia|Refugio|Hospedaje|Departamentos)\s+((?:(?:de|del|la|las|los|el|y)\s+)*["“]?[A-ZÁÉÍÓÚÑ][^\s,.;:!?¡¿"”()\n]*["”]?(?:\s+(?:(?:de|del|la|las|los|el|y)\s+)*["“]?[A-ZÁÉÍÓÚÑ][^\s,.;:!?¡¿"”()\n]*["”]?){0,3})/u;
+const SMALL = new Set(['de','del','y','e','en']);
+
+function cleanName(s){
+  s = String(s || '').replace(/\p{Extended_Pictographic}|️|‍/gu, '').replace(/#\S+/g, '')
+    .replace(/\s+/g, ' ').trim().replace(/^[@\-–|·,.:\s]+|[\-–|·,:\s]+$/g, '');
+  const noLower = !/\p{Ll}/u.test(s) && /\p{Lu}/u.test(s), noUpper = !/\p{Lu}/u.test(s) && /\s/.test(s);
+  if (s.length > 3 && (noLower || noUpper)){
+    s = s.toLowerCase().split(' ').map((w, i) => (i && SMALL.has(w)) ? w : w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+  }
+  return s;
+}
+function pickName(fullName, user, text){
+  let name = cleanName(fullName);
+  const looksHandle = !name || /^@/.test(String(fullName).trim()) || (!/\s/.test(name) && name === name.toLowerCase());
+  if (looksHandle || !LODGE_RE.test(name)){
+    const m = String(text || '').normalize('NFKC').match(NAME_IN_TEXT);
+    if (m) return cleanName(m[1] + ' ' + m[2].replace(/\s+(de|del|la|las|los|el|y)$/i, ''));
+  }
+  return name || (user ? '@' + user : '');
+}
+
+
+/* ---------- Processing ---------- */
+function mapHeader(row){
+  const map = {}; let hits = 0;
+  row.forEach((h, i) => {
+    const n = normHead(h);
+    for (const [key, list] of Object.entries(HEAD)){
+      if (list.includes(n)){ (map[key] ||= []).push(i); hits++; break; }
+    }
+  });
+  return hits >= 2 ? map : null;
+}
+
+function ingest(text){
+  const rows = parseCSV(text).map(r => r.map(c => fixMojibake(c)));
+  if (!rows.length) return 0;
+  let head = mapHeader(rows[0]);
+  let body = head ? rows.slice(1) : rows;
+  // PhantomBuster Google Maps rows copied from the browser console (no header row)
+  if (!head && rows[0].length >= 10 && /google\.[a-z.]+\/maps/i.test(rows[0][1] || '') && /data found|website found/i.test(rows[0][3] || '')){
+    head = {name: [0], post: [1], web: [2], text: [7, 10], location: [8], phone: [9], email: [11], profile: [13]};
+  }
+  const isIG = !!head && (head.user || rows[0].some(h => /posturl|ownerid|profileurl/i.test(h)));
+  const get = (r, key) => (head && head[key] ? head[key].map(i => r[i] || '').filter(Boolean) : []);
+  let added = 0;
+
+  for (const r of body){
+    const joined = r.join(' ');
+    if (!joined.trim()) continue;
+    if (/export limit reached|phbuster\.io\/upgrade|upgrade to export/i.test(joined)){ truncated = true; continue; }
+
+    let rec;
+    if (head){
+      rec = {
+        fullName: get(r, 'name')[0] || '',
+        user: (get(r, 'user')[0] || '').replace(/^@/, '').trim(),
+        phoneCols: get(r, 'phone'),
+        webCols: get(r, 'web'),
+        text: get(r, 'text').join('\n'),
+        profile: get(r, 'profile')[0] || '',
+        post: get(r, 'post')[0] || '',
+        location: get(r, 'location')[0] || ''
+      };
+      if (!rec.profile && isIG && rec.user) rec.profile = 'https://www.instagram.com/' + rec.user;
+      if (!rec.user && /instagram\.com\/([\w.]+)/i.test(rec.profile)) rec.user = rec.profile.match(/instagram\.com\/([\w.]+)/i)[1];
+      if (rec.profile && !/instagram\.com/i.test(rec.profile)) rec.profile = '';
+      rec.emails = get(r, 'email');
+    } else {
+      const nameField = r.find(f => /\p{L}/u.test(f) && !/^https?:/i.test(f.trim())) || '';
+      rec = {fullName: nameField, user: '', phoneCols: [], webCols: r.filter(f => /^https?:\/\//i.test(f.trim())),
+             text: r.join('\n'), profile: '', post: '', location: '', emails: []};
+    }
+    if (!rec.fullName && !rec.user && !rec.text) continue;
+
+    const ph = extractPhones(rec.text, false);
+    for (const c of rec.phoneCols){
+      const p2 = extractPhones(c, true);
+      p2.phones.forEach(p => { if (!ph.phones.some(x => x.nsn === p.nsn)) ph.phones.push(p); });
+      ph.incomplete.push(...p2.incomplete);
+    }
+    const webs = [...rec.webCols.flatMap(w => extractWebs(w, true)), ...extractWebs(rec.text, false)];
+    const name = pickName(rec.fullName, rec.user, rec.text);
+    const key = rec.user ? 'u:' + rec.user.toLowerCase() : 'n:' + fold(name);
+
+    let e = entries.find(x => x.key === key);
+    if (!e){
+      e = {id: 'e' + Math.random().toString(36).slice(2, 9), key, name, user: rec.user, profile: rec.profile,
+           location: rec.location, posts: [], phones: [], webs: [], emails: [], incomplete: [], text: '', override: null,
+           phoneEdit: null, webEdit: null};
+      entries.push(e); added++;
+    } else if (!LODGE_RE.test(e.name) && LODGE_RE.test(name)) e.name = name;
+    if (rec.post) e.posts.push(rec.post);
+    if (!e.location && rec.location) e.location = rec.location;
+    e.text += '\n' + [rec.fullName, rec.user, rec.text].join(' ');
+    for (const p of ph.phones){
+      const ex = e.phones.find(x => x.nsn === p.nsn);
+      if (ex){ if (RANK[p.kind] > RANK[ex.kind]) ex.kind = p.kind; } else e.phones.push(p);
+    }
+    for (const w of webs) if (!e.webs.some(x => x.key === w.key)) e.webs.push(w);
+    for (const m of [...rec.emails, rec.text].join(' ').matchAll(/[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g)){
+      const em = m[0].toLowerCase().replace(/\.$/, '');
+      if (!PORTAL_MAIL.some(d => em.endsWith('@' + d) || em.includes('.' + d)) && !e.emails.includes(em)) e.emails.push(em);
+    }
+    e.incomplete.push(...ph.incomplete.filter(x => !e.incomplete.includes(x)));
+  }
+  return added;
+}
+
+function keywords(){ return settings.kw.split('\n').map(k => fold(k).trim()).filter(Boolean); }
+
+function classify(e){
+  if (e.override === 'keep') return {ok: true};
+  if (e.override === 'drop') return {ok: false, reason: 'Descartado a mano', detail: ''};
+  const hay = fold(e.text).replace(/[#\s]+/g, ' ');
+  const hit = keywords().find(k => hay.includes(k));
+  if (hit) return {ok: false, reason: 'Rubro excluido', detail: 'Coincide con “' + hit + '”'};
+  if (e.phoneEdit != null) return e.phoneEdit.trim() ? {ok: true} : {ok: false, reason: 'Sin teléfono', detail: ''};
+  if (!e.phones.length){
+    const d = e.incomplete.length ? 'Número sin código de área: ' + e.incomplete[0]
+      : (e.posts.some(u => /google\./.test(u)) ? 'La ficha de Maps no tiene teléfono' : 'No figura en el texto; puede estar en la bio');
+    return {ok: false, reason: 'Sin teléfono', detail: d};
+  }
+  if (settings.fijos && e.phones.every(p => p.kind === 'fijo')) return {ok: false, reason: 'Solo fijo', detail: e.phones.map(fmtPhone).join(' / ')};
+  if (settings.unconfirmed && !e.phones.some(p => p.kind === 'wa')) return {ok: false, reason: 'WhatsApp sin confirmar', detail: e.phones.map(fmtPhone).join(' / ')};
+  return {ok: true};
+}
+
+const phoneText = e => e.phoneEdit != null ? e.phoneEdit.trim() : e.phones.map(fmtPhone).join(' / ');
+const webText = e => e.webEdit != null ? e.webEdit.trim() : (e.webs[0] ? e.webs[0].url.replace(/^https:\/\//, '') : '');
+
+
+/* ========== CRM ========== */
+const SB_URL = 'https://vnfgitgadadjjjciftsa.supabase.co';
+const SB_KEY = 'sb_publishable_IKbP0ieyJfrtdguY39N7wg_RMjN_CxH';
+
+const STATUSES = [['nuevo','Nuevo'],['contactado','Contactado'],['sin_respuesta','Sin respuesta'],['interesado','Interesado'],['demo','Demo agendada'],['cliente','Cliente'],['perdido','Perdido']];
+const ST = Object.fromEntries(STATUSES);
+const CLOSED = new Set(['cliente','perdido']);
+const KINDS = [['llamada','Llamada','📞'],['whatsapp','WhatsApp','💬'],['email','Email','✉️'],['visita','Visita','📍'],['nota','Nota','📝']];
+const KIND = Object.fromEntries(KINDS.map(k => [k[0], k]));
+const KIND_LABEL = {wa: 'WhatsApp ✓', unk: 'A confirmar', fijo: 'Fijo', intl: 'Extranjero'};
+
+const ICON = {
+  wa: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 21l2.1-5.5A8.4 8.4 0 1 1 21 11.5z"/></svg>',
+  tel: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg>',
+  ext: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14 21 3"/></svg>',
+  globe: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>',
+  x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>'
+};
+
+let sb = null, user = null;
+const settings = {
+  kw: load('kw', DEFAULT_KW),
+  fijos: load('fijos', false),
+  unconfirmed: load('unconfirmed', false),
+  template: load('template', '')
+};
+const crm = {leads: [], filter: 'activos', q: '', zone: load('zone', ''), sort: load('sort', 'next'), openId: null, notes: {}, composeKind: 'llamada', loadedAt: 0};
+const PROVINCIAS = new Set(['buenos aires','caba','ciudad autonoma de buenos aires','catamarca','chaco','chubut','cordoba','corrientes','entre rios','formosa','jujuy','la pampa','la rioja','mendoza','misiones','neuquen','rio negro','salta','san juan','san luis','santa cruz','santa fe','santiago del estero','tierra del fuego','tucuman']);
+const zoneKey = l => { const z = zoneOf(l.location); return z ? fold(z) : '__none'; };
+function zoneOf(loc){
+  const parts = String(loc || '').split(/[,;]/).map(s => s.trim().replace(/^[A-Z]?\d{4}[A-Z]{0,3}\s+/, '').replace(/\s+AR$/i, '')).filter(Boolean);
+  for (let i = parts.length - 1; i >= 0; i--){
+    let p = parts[i];
+    if (PROVINCIAS.has(fold(p)) && i > 0) continue;
+    for (const pr of PROVINCIAS) if (fold(p).endsWith(' ' + pr) && !/\b(de|del)$/i.test(fold(p).slice(0, -pr.length).trim())){ p = p.slice(0, p.length - pr.length).trim(); break; }
+    if (/^(villa|barrio|centro|country|zona)$/i.test(p) && i > 0) continue;
+    if (/\d/.test(p) || /^(ruta|rp|rn|km|calle|av\.?|avenida)\b/i.test(p)) continue;
+    if (p.length < 3) continue;
+    return p.replace(/\s+/g, ' ');
+  }
+  return '';
+}
+/* ---------- Provincia ---------- */
+// Se escribe a mano en la ficha (columna provincia de crm_leads). Si está vacía, se deduce:
+// 1) del texto de la ubicación, 2) de la tabla de localidades conocidas, 3) de otros prospectos de la misma localidad.
+const PROV_LABEL = {'buenos aires':'Buenos Aires','caba':'CABA','ciudad autonoma de buenos aires':'CABA','catamarca':'Catamarca','chaco':'Chaco','chubut':'Chubut','cordoba':'Córdoba','corrientes':'Corrientes','entre rios':'Entre Ríos','formosa':'Formosa','jujuy':'Jujuy','la pampa':'La Pampa','la rioja':'La Rioja','mendoza':'Mendoza','misiones':'Misiones','neuquen':'Neuquén','rio negro':'Río Negro','salta':'Salta','san juan':'San Juan','san luis':'San Luis','santa cruz':'Santa Cruz','santa fe':'Santa Fe','santiago del estero':'Santiago del Estero','tierra del fuego':'Tierra del Fuego','tucuman':'Tucumán'};
+const PROV_LIST = ['Buenos Aires','CABA','Catamarca','Chaco','Chubut','Córdoba','Corrientes','Entre Ríos','Formosa','Jujuy','La Pampa','La Rioja','Mendoza','Misiones','Neuquén','Río Negro','Salta','San Juan','San Luis','Santa Cruz','Santa Fe','Santiago del Estero','Tierra del Fuego','Tucumán'];
+const LOC_PROV = new Map();
+[
+  ['Mendoza', 'San Rafael, Rama Caída, Valle Grande, El Toledano, Villa 25 de Mayo, 25 de Mayo, Las Paredes, Capitán Montoya, Real del Padre, Cuadro Nacional, Cañada Seca, Salto de las Rosas, El Nihuil, Mendoza, Godoy Cruz, Maipú, Luján de Cuyo, Tunuyán, Tupungato, Uspallata, Potrerillos, Malargüe, Villavicencio, Vistalba, Chacras de Coria, Cacheuta, Guaymallén'],
+  ['Neuquén', 'San Martín de los Andes, Villa La Angostura, Junín de los Andes, Neuquén, Villa Traful, Caviahue, Copahue, Aluminé, Villa Pehuenia, Piedra del Águila, Plottier, Zapala, Chos Malal'],
+  ['Río Negro', 'San Carlos de Bariloche, Bariloche, El Bolsón, Villa Mascardi, Dina Huapi, Las Grutas, San Antonio Oeste, Viedma, General Roca, Cipolletti, Villa Regina'],
+  ['Chubut', 'Esquel, Trevelin, Puerto Madryn, Trelew, Comodoro Rivadavia, El Hoyo, Lago Puelo, Epuyén, Gaiman, Puerto Pirámides, Playa Unión, Dolavon, Rada Tilly, Cholila, El Maitén'],
+  ['Santa Cruz', 'El Calafate, El Chaltén, Río Gallegos, Puerto Deseado, Caleta Olivia, Los Antiguos, Perito Moreno, Puerto San Julián'],
+  ['Tierra del Fuego', 'Ushuaia, Río Grande, Tolhuin'],
+  ['Misiones', 'Puerto Iguazú, Posadas, San Ignacio, Eldorado, Oberá, Wanda, Montecarlo, Leandro N. Alem, Aristóbulo del Valle, Apóstoles, Jardín América, Puerto Rico, Capioví'],
+  ['Corrientes', 'Colonia Carlos Pellegrini, Carlos Pellegrini, Ituzaingó, Corrientes, Paso de la Patria, Esquina, Goya, Santo Tomé, Paso de los Libres, Yapeyú'],
+  ['Entre Ríos', 'Gualeguaychú, Concordia, Paraná, Federación, Villa Elisa, Concepción del Uruguay, Villa Paranacito, Gualeguay, Libertador San Martín, Basavilbaso'],
+  ['Santa Fe', 'Rosario, Santa Fe, Rafaela, Venado Tuerto, Reconquista, Esperanza, Rufino, Funes, Granadero Baigorria'],
+  ['Córdoba', 'Córdoba, Villa Carlos Paz, Carlos Paz, Alta Gracia, La Cumbre, Capilla del Monte, Cosquín, Mina Clavero, Villa General Belgrano, La Falda, Nono, Los Reartes, Villa Yacanto, Santa Rosa de Calamuchita, Río Ceballos, Unquillo, Jesús María, Villa Dolores, Río Cuarto, Villa Rumipal, Embalse, Los Cocos, San Marcos Sierras, Cruz del Eje, Tanti, Villa Giardino, Villa Cura Brochero, Cura Brochero, La Granja, Ascochinga'],
+  ['San Luis', 'San Luis, Villa de Merlo, La Punta, Potrero de los Funes, Juana Koslay, Villa Mercedes, Carpintería'],
+  ['Salta', 'Salta, Cafayate, Cachi, Molinos, Seclantás, Animaná, Tartagal, Orán, Iruya, La Caldera, Vaqueros, Rosario de Lerma'],
+  ['Jujuy', 'San Salvador de Jujuy, Jujuy, Purmamarca, Tilcara, Humahuaca, Maimará, Yala, Volcán, Tumbaya, Susques, Palpalá, Calilegua, Abra Pampa, La Quiaca'],
+  ['Tucumán', 'San Miguel de Tucumán, Tucumán, Tafí del Valle, El Mollar, Yerba Buena, San Javier, Amaicha del Valle, Tafí Viejo, Monteros'],
+  ['Catamarca', 'San Fernando del Valle de Catamarca, Catamarca, Belén, Tinogasta, Fiambalá, Andalgalá, Antofagasta de la Sierra, El Rodeo, Pomán'],
+  ['La Rioja', 'La Rioja, Chilecito, Villa Unión, Famatina, Chamical, Aimogasta, Talampaya, Vinchina'],
+  ['San Juan', 'San Juan, Barreal, Calingasta, Ullum, Zonda, Pocito, Valle Fértil, San José de Jáchal, Jáchal'],
+  ['La Pampa', 'General Pico, Toay, Victorica'],
+  ['Santiago del Estero', 'Termas de Río Hondo, Santiago del Estero, La Banda, Frías, Añatuya'],
+  ['Formosa', 'Formosa, Clorinda, Las Lomitas'],
+  ['Chaco', 'Resistencia, Presidencia Roque Sáenz Peña, Juan José Castelli, Charata, Barranqueras'],
+  ['Buenos Aires', 'Mar del Plata, Villa Gesell, Pinamar, Cariló, Mar de las Pampas, Mar Azul, Mar de Ajó, San Clemente del Tuyú, Santa Teresita, Necochea, Tandil, Sierra de la Ventana, Tornquist, Bahía Blanca, La Plata, Tigre, San Isidro, San Fernando, Vicente López, Olivos, Martínez, Beccar, Nordelta, Escobar, Pilar, Campana, Zárate, Luján, San Antonio de Areco, Chascomús, Monte Hermoso, Claromecó, Orense, Mar Chiquita, Valeria del Mar, Ostende, Las Toninas, La Lucila del Mar, San Bernardo, Mar del Tuyú, Santa Clara del Mar, Punta Indio, Lobos, Cañuelas, Tres Arroyos, Olavarría, Azul, Balcarce, Quilmes'],
+  ['CABA', 'Palermo, Recoleta, San Telmo, Belgrano, Puerto Madero, Villa Crespo, Almagro, Retiro, Monserrat, Núñez, Caballito, Colegiales, Barracas, La Boca, Balvanera, San Nicolás']
+].forEach(([prov, names]) => names.split(',').forEach(n => LOC_PROV.set(fold(n.trim()), prov)));
+
+function provFromText(loc){
+  const parts = String(loc || '').split(/[,;]/)
+    .map(s => fold(s).trim().replace(/^[a-z]?\d{4}[a-z]{0,3}\s+/, '').replace(/\s+ar$/, '').replace(/^provincia de /, '').trim())
+    .filter(Boolean);
+  for (let i = parts.length - 1; i >= 0; i--) if (PROV_LABEL[parts[i]]) return PROV_LABEL[parts[i]];
+  // sin coma: "Villa La Angostura Neuquén" (solo en el último tramo y sin calles)
+  const last = parts[parts.length - 1] || '';
+  for (const k in PROV_LABEL){
+    if (last.endsWith(' ' + k) && !/\b(de|del|av|avenida|calle|c|ruta|rp|rn)\.?$/.test(last.slice(0, -k.length).trim())) return PROV_LABEL[k];
+  }
+  return '';
+}
+let provMajor = new Map();
+function rebuildProv(){
+  const tally = new Map();
+  for (const l of crm.leads){
+    const p = provExplicit(l); if (!p) continue;
+    const k = zoneKey(l); if (k === '__none') continue;
+    const m = tally.get(k) || new Map(); m.set(p, (m.get(p) || 0) + 1); tally.set(k, m);
+  }
+  provMajor = new Map();
+  for (const [k, m] of tally){ let best = '', n = 0; for (const [p, c] of m) if (c > n){ best = p; n = c; } provMajor.set(k, best); }
+}
+const provExplicit = l => (l.provincia || '').trim() || provFromText(l.location);
+function provOf(l){
+  const e = provExplicit(l); if (e) return e;
+  const k = zoneKey(l);
+  return LOC_PROV.get(k) || provMajor.get(k) || '';
+}
+const provKey = l => { const p = provOf(l); return p ? fold(p) : '__none'; };
+// Filtro de zona: '' (todas) · 'prov:<provincia>' · '<provincia>|<localidad>'
+function zoneMatch(l, z){
+  if (!z) return true;
+  if (z.startsWith('prov:')) return provKey(l) === z.slice(5);
+  const i = z.indexOf('|');
+  return i > 0 ? provKey(l) === z.slice(0, i) && zoneKey(l) === z.slice(i + 1) : zoneKey(l) === z;
+}
+
+let entries = [];      // import buffer (used by the filter engine)
+let truncated = false;
+
+/* ---------- Dates ---------- */
+const isoLocal = d => { const x = new Date(d); x.setMinutes(x.getMinutes() - x.getTimezoneOffset()); return x.toISOString().slice(0, 10); };
+const todayISO = () => isoLocal(new Date());
+const addDaysISO = n => { const d = new Date(); d.setDate(d.getDate() + n); return isoLocal(d); };
+const DOW = ['dom','lun','mar','mié','jue','vie','sáb'];
+const MON = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+function fmtDay(iso){
+  if (!iso) return '';
+  const t = todayISO();
+  if (iso === t) return 'Hoy';
+  if (iso === addDaysISO(1)) return 'Mañana';
+  if (iso === addDaysISO(-1)) return 'Ayer';
+  const [y, m, d] = iso.split('-').map(Number);
+  const dt = new Date(y, m - 1, d);
+  return `${DOW[dt.getDay()]} ${d} ${MON[m - 1]}` + (y !== new Date().getFullYear() ? ' ' + y : '');
+}
+function relTime(ts){
+  if (!ts) return '';
+  const s = (Date.now() - new Date(ts).getTime()) / 1000;
+  if (s < 60) return 'recién';
+  if (s < 3600) return `hace ${Math.round(s / 60)} min`;
+  const day = isoLocal(new Date(ts));
+  if (day === todayISO()) return `hoy ${new Date(ts).toLocaleTimeString('es-AR', {hour: '2-digit', minute: '2-digit'})}`;
+  if (day === addDaysISO(-1)) return 'ayer';
+  const days = Math.round(s / 86400);
+  if (days < 14) return `hace ${days} días`;
+  return fmtDay(day);
+}
+const fmtStamp = ts => { const d = new Date(ts); return `${fmtDay(isoLocal(d))}, ${d.toLocaleTimeString('es-AR', {hour: '2-digit', minute: '2-digit'})}`; };
+function dueClass(iso, status){
+  if (!iso || CLOSED.has(status)) return '';
+  const t = todayISO();
+  return iso < t ? 'overdue' : iso === t ? 'today' : '';
+}
+
+/* ---------- Phones helpers ---------- */
+const digitsOf = s => String(s || '').replace(/\D/g, '');
+function parsePhonesText(text, prev = []){
+  return String(text || '').split(/[\/,;]| y /).map(s => s.trim()).filter(Boolean).map(s => {
+    const n = normAR(s);
+    let p;
+    if (n.ok){
+      const isFijo = /^\s*\+?\s*54\s*[^9\s]/.test(s) && !n.mobile && prev.some(x => x.k === 'fijo' && digitsOf(x.n).endsWith(n.nsn));
+      p = {n: (isFijo ? '+54' : '+549') + n.nsn, k: n.mobile ? 'wa' : 'unk'};
+    } else if (/^\s*\+/.test(s) && !digitsOf(s).startsWith('54') && digitsOf(s).length >= 9){
+      p = {n: '+' + digitsOf(s), k: 'intl'};
+    } else p = {n: s, k: 'unk'};
+    const old = prev.find(x => digitsOf(x.n) === digitsOf(p.n));
+    if (old) p.k = old.k;
+    return p;
+  });
+}
+const webHref = w => !w ? '' : (/^https?:/i.test(w) ? w : 'https://' + w);
+const webLabel = w => String(w || '').replace(/^https?:\/\/(www\.)?/i, '').replace(/\/$/, '');
+const phonesToText = arr => (arr || []).map(p => p.n).join(' / ');
+function waLink(p, lead){
+  let url = 'https://wa.me/' + digitsOf(p.n);
+  const t = (settings.template || '').trim();
+  if (t) url += '?text=' + encodeURIComponent(t.replace(/\{nombre\}/gi, lead.name || ''));
+  return url;
+}
+const cleanLocation = s => String(s || '').replace(/,?\s*Argentina$/i, '').replace(/\bProvincia de /i, '').replace(/\s*\b[A-Z]\d{4}[A-Z]{0,3}\b/, '').replace(/,\s*,/g, ',').replace(/^[,\s]+|[,\s]+$/g, '');
+
+/* ---------- Data layer ---------- */
+async function loadLeads(){
+  let all = [], from = 0;
+  for (;;){
+    const {data, error} = await sb.from('crm_leads').select('*').order('created_at', {ascending: true}).range(from, from + 999);
+    if (error) throw error;
+    all = all.concat(data || []);
+    if (!data || data.length < 1000) break;
+    from += 1000;
+  }
+  crm.leads = all;
+  rebuildProv();
+  crm.loadedAt = Date.now();
+}
+async function updateLead(id, patch){
+  const lead = crm.leads.find(l => l.id === id); if (!lead) return;
+  const backup = {...lead};
+  Object.assign(lead, patch);
+  if ('provincia' in patch || 'location' in patch) rebuildProv();
+  renderPipe(); if (crm.openId === id) renderDrawerHeader();
+  const {data, error} = await sb.from('crm_leads').update(patch).eq('id', id).select().single();
+  if (error){ Object.assign(lead, backup); renderPipe(); toast('No se pudo guardar: ' + error.message); return false; }
+  Object.assign(lead, data);
+  if ('provincia' in patch || 'location' in patch) rebuildProv();
+  return true;
+}
+async function loadNotes(id){
+  const {data, error} = await sb.from('crm_notes').select('*').eq('lead_id', id).order('created_at', {ascending: false});
+  if (error){ toast('No se pudieron cargar las notas'); return; }
+  crm.notes[id] = data || [];
+}
+async function addNote(lead, kind, body, extraPatch = {}){
+  const {data, error} = await sb.from('crm_notes').insert({lead_id: lead.id, kind, body}).select().single();
+  if (error){ toast('No se pudo guardar la nota: ' + error.message); return false; }
+  (crm.notes[lead.id] ||= []).unshift(data);
+  const patch = {...extraPatch};
+  if (kind !== 'nota'){
+    patch.last_contact_at = data.created_at;
+    if (lead.status === 'nuevo' && !patch.status) patch.status = 'contactado';
+  }
+  if (Object.keys(patch).length) await updateLead(lead.id, patch);
+  return true;
+}
+
+/* ---------- Auth ---------- */
+function show(view){
+  $('#vBoot').hidden = view !== 'boot';
+  $('#vLogin').hidden = view !== 'login';
+  $('#vApp').hidden = view !== 'app';
+}
+function showLogin(msg){ show('login'); $('#lErr').textContent = msg || ''; $('#lBtn').disabled = false; }
+async function checkAdmin(){
+  let {data, error} = await sb.rpc('crm_is_admin');
+  if (error){
+    // Token vencido (típico al volver de segundo plano en el celu): renovar y reintentar antes de rendirse
+    const r = await sb.auth.refreshSession();
+    if (!r.error) ({data, error} = await sb.rpc('crm_is_admin'));
+  }
+  return {ok: data === true, denied: !error && data !== true, error};
+}
+async function enter(session){
+  const {ok, denied, error} = await checkAdmin();
+  if (denied){ await sb.auth.signOut(); showLogin('Esta cuenta no tiene acceso al CRM.'); return; }
+  if (!ok){
+    const {data: {session: s}} = await sb.auth.getSession();
+    if (!s){ showLogin('Tu sesión venció. Pedí un link nuevo o entrá con tu contraseña.'); return; }
+    showLogin('No se pudo conectar' + (error ? ' (' + error.message + ')' : '') + '. Revisá tu conexión y recargá la página; no hace falta pedir otro link.');
+    $('#lBtn').textContent = 'Reintentar'; $('#lBtn').onclick = e => { e.preventDefault(); location.reload(); };
+    return;
+  }
+  user = session.user;
+  $('#uMail').textContent = user.email || '';
+  show('app');
+  $('#tbPipe').innerHTML = '<tr><td colspan="5" class="empty-state">Cargando leads…</td></tr>';
+  try{ await Promise.all([loadLeads(), loadMeta()]); }catch(e){ toast('Error cargando leads: ' + e.message); }
+  restoreMapsState();
+  if (maps.restored && maps.q) $('#mapsQ').value = maps.origQ || maps.q;
+  renderPipe();
+}
+async function boot(){
+  if (!window.supabase){ show('login'); $('#lErr').textContent = 'No se pudo cargar Supabase. Revisá la conexión y recargá.'; $('#lBtn').disabled = true; return; }
+  sb = window.supabase.createClient(SB_URL, SB_KEY, {auth: {persistSession: true, autoRefreshToken: true, detectSessionInUrl: true}});
+  sb.auth.onAuthStateChange((ev, s) => { if (ev === 'SIGNED_OUT' && user){ user = null; crm.leads = []; showLogin('Se cerró la sesión. Entrá de nuevo.'); } });
+  const hashErr = new URLSearchParams(location.hash.slice(1)).get('error_description');
+  const {data: {session}} = await sb.auth.getSession();
+  if (hashErr) history.replaceState(null, '', location.pathname);
+  if (session) await enter(session);
+  else showLogin(hashErr ? (/expired|invalid/i.test(hashErr) ? 'El link venció o ya se usó. Pedí uno nuevo.' : hashErr) : '');
+}
+let passMode = false;
+$('#lMode').addEventListener('click', () => {
+  passMode = !passMode;
+  $('#passWrap').hidden = !passMode;
+  $('#lPass').required = passMode;
+  $('#lBtn').textContent = passMode ? 'Entrar' : 'Enviarme el link';
+  $('#lMode').textContent = passMode ? 'Mejor mandame un link por email' : 'Entrar con contraseña';
+  $('#lErr').textContent = ''; $('#lOk').hidden = true;
+});
+$('#loginForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const email = $('#lEmail').value.trim();
+  $('#lBtn').disabled = true; $('#lErr').textContent = ''; $('#lOk').hidden = true;
+  try{ localStorage.setItem('filtroLeads.email', email); }catch(_){}
+  if (!passMode){
+    const {error} = await sb.auth.signInWithOtp({email, options: {emailRedirectTo: location.origin + location.pathname, shouldCreateUser: false}});
+    $('#lBtn').disabled = false;
+    if (error){ $('#lErr').textContent = /not found|signups not allowed/i.test(error.message) ? 'Ese email no tiene cuenta.' : /rate|seconds/i.test(error.message) ? 'Esperá un minuto antes de pedir otro link.' : error.message; return; }
+    $('#lOk').hidden = false;
+    $('#lOk').textContent = 'Listo: revisá tu correo (y spam) y tocá el link. Se abre el CRM ya con la sesión iniciada.';
+    return;
+  }
+  const {data, error} = await sb.auth.signInWithPassword({email, password: $('#lPass').value});
+  if (error){ showLogin(/invalid/i.test(error.message) ? 'Email o contraseña incorrectos.' : error.message); return; }
+  $('#lPass').value = '';
+  await enter(data.session);
+});
+try{ $('#lEmail').value = localStorage.getItem('filtroLeads.email') || ''; }catch(_){}
+$('#btnLogout').addEventListener('click', async () => { if (!confirm('¿Cerrar sesión? Ojo: también se cierra tu sesión de admin en checkinn.com.ar en este dispositivo.')) return; user = null; await sb.auth.signOut(); crm.leads = []; closeDrawer(); showLogin(); });
+
+/* ---------- Tabs ---------- */
+function setTab(t){
+  document.querySelectorAll('.tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === t));
+  $('#vPipe').hidden = t !== 'pipe';
+  $('#vImp').hidden = t !== 'imp';
+  $('#vMaps').hidden = t !== 'maps';
+  if (t === 'imp') renderImport(); else if (t === 'maps') renderMaps(); else renderPipe();
+}
+document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => setTab(b.dataset.tab)));
+
+/* ---------- Pipeline ---------- */
+function filterLeads(){
+  const t = todayISO(), q = fold(crm.q).trim(), qd = digitsOf(crm.q);
+  return crm.leads.filter(l => {
+    if (!zoneMatch(l, crm.zone)) return false;
+    if (crm.filter === 'hoy'){ if (!l.next_action_at || l.next_action_at > t || CLOSED.has(l.status)) return false; }
+    else if (crm.filter === 'activos'){ if (CLOSED.has(l.status)) return false; }
+    else if (crm.filter !== 'todos' && l.status !== crm.filter) return false;
+    if (q){
+      const hay = fold([l.name, l.location, provOf(l), l.web, l.email, l.instagram, l.next_action].join(' '));
+      if (!hay.includes(q) && !(qd.length >= 4 && (l.phones || []).some(p => digitsOf(p.n).includes(qd)))) return false;
+    }
+    return true;
+  }).sort((a, b) => {
+    const byName = (a.name || '').localeCompare(b.name || '', 'es');
+    if (crm.sort === 'name') return byName;
+    if (crm.sort === 'recent') return a.created_at < b.created_at ? 1 : a.created_at > b.created_at ? -1 : byName;
+    if (crm.sort === 'zone'){ const pa = provOf(a), pb = provOf(b); if (!pa !== !pb) return pa ? -1 : 1; if (pa !== pb) return pa.localeCompare(pb, 'es'); const za = zoneOf(a.location), zb = zoneOf(b.location); if (!za !== !zb) return za ? -1 : 1; return za.localeCompare(zb, 'es') || byName; }
+    const da = a.next_action_at || '9999', db = b.next_action_at || '9999';
+    if (da !== db) return da < db ? -1 : 1;
+    return byName;
+  });
+}
+function renderChips(){
+  const t = todayISO();
+  const inZone = l => zoneMatch(l, crm.zone);
+  const count = f => crm.leads.filter(l => inZone(l) && f(l)).length;
+  const chips = [
+    ['hoy', 'Para hoy', count(l => l.next_action_at && l.next_action_at <= t && !CLOSED.has(l.status)), true],
+    ['activos', 'Activos', count(l => !CLOSED.has(l.status))],
+    ...STATUSES.map(([k, v]) => [k, v, count(l => l.status === k)]),
+    ['todos', 'Todos', count(() => true)]
+  ];
+  $('#chips').innerHTML = chips.map(([k, label, n, hot]) =>
+    `<button class="chip ${crm.filter === k ? 'on' : ''} ${hot && n ? 'hot' : ''}" data-filter="${k}">${label}<b>${n}</b></button>`).join('');
+}
+function phoneMini(l){
+  const ps = l.phones || [];
+  if (!ps.length) return l.web ? `<div class="phone"><span class="muted">Sin teléfono</span><a class="ic" href="${esc(webHref(l.web))}" target="_blank" rel="noopener" title="Sitio web" data-stop>${ICON.globe}</a></div>` : '<span class="muted">—</span>';
+  const p = ps[0];
+  return `<div class="phone"><span class="num">${esc(p.n)}</span>` +
+    (p.k !== 'fijo' ? `<a class="ic" href="${esc(waLink(p, l))}" target="_blank" rel="noopener" title="WhatsApp" data-stop>${ICON.wa}</a>` : '') +
+    `<a class="ic" href="tel:${esc(p.n)}" title="Llamar" data-stop>${ICON.tel}</a>` +
+    (ps.length > 1 ? `<span class="tag muted">+${ps.length - 1}</span>` : '') +
+    (l.web ? `<a class="ic" href="${esc(webHref(l.web))}" target="_blank" rel="noopener" title="Sitio web: ${esc(webLabel(l.web))}" data-stop>${ICON.globe}</a>` : '') + `</div>`;
+}
+function renderZones(){
+  // agrupa por provincia y, dentro, por localidad (alfabético)
+  const provs = new Map();
+  for (const l of crm.leads){
+    const pk = provKey(l), zk = zoneKey(l);
+    if (!provs.has(pk)) provs.set(pk, {label: provOf(l) || 'Sin provincia', n: 0, zones: new Map()});
+    const P = provs.get(pk); P.n++;
+    if (!P.zones.has(zk)) P.zones.set(zk, [zoneOf(l.location) || 'Sin localidad', 0]);
+    P.zones.get(zk)[1]++;
+  }
+  // filtro guardado con el formato viejo (solo localidad): lo paso al nuevo
+  if (crm.zone && !crm.zone.startsWith('prov:') && !crm.zone.includes('|')){
+    const hit = crm.leads.find(l => zoneKey(l) === crm.zone);
+    crm.zone = hit ? provKey(hit) + '|' + crm.zone : '';
+  }
+  const valid = new Set(['']);
+  for (const [pk, P] of provs){ valid.add('prov:' + pk); for (const zk of P.zones.keys()) valid.add(pk + '|' + zk); }
+  if (!valid.has(crm.zone)) crm.zone = '';
+  const plist = [...provs.entries()].sort((a, b) => (a[0] === '__none') - (b[0] === '__none') || a[1].label.localeCompare(b[1].label, 'es'));
+  let html = `<option value="">Todas las zonas</option>`;
+  for (const [pk, P] of plist){
+    const zl = [...P.zones.entries()].sort((a, b) => (a[0] === '__none') - (b[0] === '__none') || a[1][0].localeCompare(b[1][0], 'es'));
+    html += `<optgroup label="${esc(P.label)}"><option value="prov:${esc(pk)}" ${crm.zone === 'prov:' + pk ? 'selected' : ''}>Toda ${esc(P.label)} (${P.n})</option>` +
+      zl.map(([zk, [label, n]]) => `<option value="${esc(pk + '|' + zk)}" ${crm.zone === pk + '|' + zk ? 'selected' : ''}>${esc(label)} (${n})</option>`).join('') + `</optgroup>`;
+  }
+  $('#pZone').innerHTML = html;
+  $('#pZone').hidden = provs.size < 2 && plist.every(([, P]) => P.zones.size < 2);
+  $('#pSort').value = crm.sort;
+}
+function renderPipe(){
+  if ($('#vApp').hidden) return;
+  renderChips();
+  renderZones();
+  const list = filterLeads();
+  const empty = !crm.leads.length
+    ? 'Todavía no hay leads. Andá a <b>Importar</b> para cargar un CSV, o creá uno con <b>+ Nuevo lead</b>.'
+    : crm.filter === 'hoy' ? 'No hay nada pendiente para hoy. 🎉' : 'No hay leads en esta vista.';
+  $('#tbPipe').innerHTML = list.length ? list.map(l => {
+    const dc = dueClass(l.next_action_at, l.status);
+    return `<tr data-id="${l.id}" class="${crm.openId === l.id ? 'sel' : ''}">
+      <td><div class="name">${esc(l.name)}</div>${l.location ? `<div class="meta">${esc(l.location)}</div>` : ''}</td>
+      <td>${phoneMini(l)}</td>
+      <td><span class="st st-${l.status}">${ST[l.status] || l.status}</span></td>
+      <td class="${l.last_contact_at ? '' : 'hide-m'}" data-l="Último contacto:">${l.last_contact_at ? esc(relTime(l.last_contact_at)) : '<span class="muted">—</span>'}</td>
+      <td class="${l.next_action_at || l.next_action ? '' : 'hide-m'}" data-l="Próxima:">${l.next_action_at ? `<span class="${dc}">${esc(fmtDay(l.next_action_at))}</span> ` : ''}${l.next_action ? `<span class="muted">${esc(l.next_action)}</span>` : (l.next_action_at ? '' : '<span class="muted">—</span>')}</td>
+    </tr>`;
+  }).join('') : `<tr><td colspan="5" class="empty-state">${empty}</td></tr>`;
+  $('#pipeHint').textContent = list.length ? `${list.length} lead${list.length === 1 ? '' : 's'} en esta vista.` : '';
+}
+$('#chips').addEventListener('click', e => { const b = e.target.closest('[data-filter]'); if (!b) return; crm.filter = b.dataset.filter; renderPipe(); });
+$('#pq').addEventListener('input', e => { crm.q = e.target.value; renderPipe(); });
+$('#pZone').addEventListener('change', e => { crm.zone = e.target.value; store('zone', crm.zone); renderPipe(); });
+$('#pSort').addEventListener('change', e => { crm.sort = e.target.value; store('sort', crm.sort); renderPipe(); });
+$('#tbPipe').addEventListener('click', e => {
+  if (e.target.closest('[data-stop]')) return;
+  const tr = e.target.closest('tr[data-id]'); if (tr) openDrawer(tr.dataset.id);
+});
+
+/* ---------- Drawer ---------- */
+function curLead(){ return crm.leads.find(l => l.id === crm.openId); }
+async function openDrawer(id){
+  crm.openId = id;
+  const l = curLead(); if (!l) return;
+  $('#drawer').classList.add('on'); $('#scrim').classList.add('on'); $('#drawer').setAttribute('aria-hidden', 'false');
+  renderPipe();
+  renderDrawer();
+  if (!crm.notes[id]){ await loadNotes(id); if (crm.openId === id) renderDrawer(); }
+}
+function closeDrawer(){
+  crm.openId = null;
+  $('#drawer').classList.remove('on'); $('#scrim').classList.remove('on'); $('#drawer').setAttribute('aria-hidden', 'true');
+  renderPipe();
+}
+$('#dClose').addEventListener('click', closeDrawer);
+$('#scrim').addEventListener('click', closeDrawer);
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && crm.openId && !document.querySelector('dialog[open]')) closeDrawer(); });
+
+function renderDrawerHeader(){
+  const l = curLead(); if (!l) return;
+  if (document.activeElement !== $('#dName')) $('#dName').value = l.name || '';
+  const sel = $('#dStatus'); if (sel && document.activeElement !== sel) sel.value = l.status;
+}
+function renderDrawer(){
+  const l = curLead(); if (!l) return;
+  renderDrawerHeader();
+  const notes = crm.notes[l.id];
+  const src = l.source_url ? `<a href="${esc(l.source_url)}" target="_blank" rel="noopener">${/google\./.test(l.source_url) ? 'ver en Maps' : 'ver post'}</a>` : '';
+  const ig = l.instagram ? `<a href="${esc(l.instagram)}" target="_blank" rel="noopener">@${esc((l.instagram.match(/instagram\.com\/([\w.]+)/i) || [, l.instagram])[1])}</a>` : '';
+  const pv = provOf(l);
+  const meta = [l.location ? esc(l.location) : '', pv && !fold(l.location || '').includes(fold(pv)) ? esc(pv) : '', ig, src].filter(Boolean).join(' · ');
+  const webHref = l.web ? (/^https?:/.test(l.web) ? l.web : 'https://' + l.web) : '';
+
+  $('#dBody').innerHTML = `
+    ${meta ? `<div class="meta" style="margin-top:-2px">${meta}</div>` : ''}
+
+    <div class="d-sec">
+      ${(l.phones || []).map(p => `
+        <div class="contact-row">
+          <span class="num">${esc(p.n)}</span><span class="tag ${p.k}">${KIND_LABEL[p.k] || ''}</span>
+          <span class="spacer"></span>
+          ${p.k !== 'fijo' ? `<a class="btn sm primary" href="${esc(waLink(p, l))}" target="_blank" rel="noopener" data-act="openwa">${ICON.wa} WhatsApp</a>` : ''}
+          <a class="btn sm" href="tel:${esc(p.n)}" data-act="opencall">${ICON.tel} Llamar</a>
+        </div>`).join('') || '<p class="muted" style="margin:0">Sin teléfono cargado.</p>'}
+      ${(l.web || l.email) ? `<div class="contact-row" style="margin-top:8px">
+        ${l.web ? `<a class="btn sm" href="${esc(webHref)}" target="_blank" rel="noopener">${ICON.ext} ${esc(l.web.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, ''))}</a>` : ''}
+        ${l.email ? `<a class="btn sm" href="mailto:${esc(l.email)}">✉️ ${esc(l.email)}</a>` : ''}
+      </div>` : ''}
+    </div>
+
+    <div class="d-sec grid2">
+      <label>Estado
+        <select id="dStatus">${STATUSES.map(([k, v]) => `<option value="${k}" ${l.status === k ? 'selected' : ''}>${v}</option>`).join('')}</select>
+      </label>
+      <label>Próxima acción
+        <input type="date" id="dNextDate" value="${esc(l.next_action_at || '')}">
+      </label>
+      <label style="grid-column:1/-1">Qué hay que hacer
+        <input id="dNextText" value="${esc(l.next_action || '')}" placeholder="Ej: volver a llamar, mandar demo…">
+      </label>
+    </div>
+    <div class="quick">
+      <button class="sm" data-next="1">Mañana</button>
+      <button class="sm" data-next="3">En 3 días</button>
+      <button class="sm" data-next="7">En 1 semana</button>
+      <button class="sm" data-next="30">En 1 mes</button>
+      ${l.next_action_at || l.next_action ? '<button class="sm ghost" data-next="clear">Quitar</button>' : ''}
+    </div>
+
+    <div class="d-sec">
+      <h3>Registrar contacto</h3>
+      <div class="seg" id="dKinds">${KINDS.map(([k, label, ic]) => `<button type="button" data-kind="${k}" class="${crm.composeKind === k ? 'on' : ''}">${ic} ${label}</button>`).join('')}</div>
+      <textarea id="dNote" rows="3" placeholder="Qué hablaron, cuántas unidades tiene, qué sistema usa, objeciones…"></textarea>
+      <div class="row" style="margin-top:8px">
+        <button class="primary sm" id="dSaveNote">Guardar</button>
+        <span class="spacer"></span>
+        <button class="sm" data-quick="noatendio">No atendió</button>
+        <button class="sm" data-quick="wasent">Le escribí por WhatsApp</button>
+      </div>
+      <p class="hint">Ctrl + Enter guarda. Registrar un contacto pasa a “Contactado” los leads nuevos.</p>
+    </div>
+
+    <div class="d-sec">
+      <h3>Historial</h3>
+      <div class="timeline">
+        ${notes == null ? '<p class="muted">Cargando…</p>' : notes.length ? notes.map(n => `
+          <div class="note">
+            <div class="k" title="${esc((KIND[n.kind] || [])[1] || '')}">${(KIND[n.kind] || [, , '📝'])[2]}</div>
+            <div><div class="when">${esc((KIND[n.kind] || [, 'Nota'])[1])} · ${esc(fmtStamp(n.created_at))}</div>${n.body ? `<div class="body">${esc(n.body)}</div>` : ''}</div>
+            <button class="ghost sm" data-delnote="${n.id}" title="Borrar nota">${ICON.x}</button>
+          </div>`).join('') : '<p class="muted" style="margin:0">Todavía no hay registros.</p>'}
+      </div>
+    </div>
+
+    <div class="d-sec">
+      <details class="more">
+        <summary>Editar datos de contacto</summary>
+        <div class="grid2" style="margin-top:10px">
+          <label style="grid-column:1/-1">Teléfonos (separados por /)<input data-field="phones" value="${esc(phonesToText(l.phones))}"></label>
+          <label>Web<input data-field="web" value="${esc(l.web || '')}"></label>
+          <label>Email<input data-field="email" type="email" value="${esc(l.email || '')}"></label>
+          <label>Instagram<input data-field="instagram" value="${esc(l.instagram || '')}" placeholder="https://instagram.com/…"></label>
+          <label>Zona / localidad<input data-field="location" value="${esc(l.location || '')}"></label>
+          <label>Provincia<input data-field="provincia" list="provList" value="${esc(l.provincia || '')}" placeholder="${esc(provOf(l) ? 'Se toma: ' + provOf(l) : 'Elegí o escribí')}" autocomplete="off"></label>
+          <datalist id="provList">${PROV_LIST.map(p => `<option value="${esc(p)}">`).join('')}</datalist>
+          ${(() => { const zk = zoneKey(l), pv2 = provOf(l); if (zk === '__none' || !pv2) return ''; const t = crm.leads.filter(x => zoneKey(x) === zk && provKey(x) === provKey(l) && (x.provincia || '') !== pv2); return t.length ? `<div style="grid-column:1/-1"><button class="sm" id="dProvAll" data-n="${t.length}">Poner “${esc(pv2)}” a los ${t.length} prospecto${t.length === 1 ? '' : 's'} de ${esc(zoneOf(l.location))}</button></div>` : ''; })()}
+        </div>
+        <div class="row" style="margin-top:14px">
+          <span class="muted" style="font-size:14px">Creado ${esc(fmtStamp(l.created_at))}${l.source ? ' · desde ' + esc(l.source) : ''}</span>
+          <span class="spacer"></span>
+          <button class="danger sm" id="dDelete">Eliminar lead</button>
+        </div>
+      </details>
+    </div>`;
+}
+
+$('#dName').addEventListener('change', e => { const v = e.target.value.trim(); const l = curLead(); if (l && v && v !== l.name) updateLead(l.id, {name: v}); });
+$('#dName').addEventListener('keydown', e => { if (e.key === 'Enter') e.target.blur(); });
+
+$('#dBody').addEventListener('change', e => {
+  const l = curLead(); if (!l) return;
+  const t = e.target;
+  if (t.id === 'dStatus') return updateLead(l.id, {status: t.value}).then(() => toast('Estado: ' + ST[t.value]));
+  if (t.id === 'dNextDate') return updateLead(l.id, {next_action_at: t.value || null}).then(renderDrawer);
+  if (t.id === 'dNextText') return updateLead(l.id, {next_action: t.value.trim() || null});
+  if (t.dataset.field){
+    const f = t.dataset.field, v = t.value.trim();
+    if (f === 'phones') return updateLead(l.id, {phones: parsePhonesText(v, l.phones)}).then(renderDrawer);
+    if (f === 'provincia'){ const k = fold(v); return updateLead(l.id, {provincia: v ? (PROV_LABEL[k] || v) : null}).then(renderDrawer); }
+    return updateLead(l.id, {[f]: v || null}).then(renderDrawer);
+  }
+});
+$('#dBody').addEventListener('click', async e => {
+  const l = curLead(); if (!l) return;
+  const b = e.target.closest('button,a'); if (!b) return;
+  if (b.dataset.kind){ crm.composeKind = b.dataset.kind; document.querySelectorAll('#dKinds button').forEach(x => x.classList.toggle('on', x === b)); $('#dNote').focus(); return; }
+  if (b.dataset.act === 'openwa'){ crm.composeKind = 'whatsapp'; setTimeout(renderDrawerKinds, 0); return; }
+  if (b.dataset.act === 'opencall'){ crm.composeKind = 'llamada'; setTimeout(renderDrawerKinds, 0); return; }
+  if (b.dataset.next){
+    if (b.dataset.next === 'clear') await updateLead(l.id, {next_action_at: null, next_action: null});
+    else await updateLead(l.id, {next_action_at: addDaysISO(+b.dataset.next)});
+    renderDrawer(); return;
+  }
+  if (b.id === 'dSaveNote') return saveNote();
+  if (b.dataset.quick === 'noatendio'){
+    const patch = {};
+    if (['nuevo', 'contactado'].includes(l.status)) patch.status = 'sin_respuesta';
+    if (!l.next_action_at){ patch.next_action_at = addDaysISO(1); patch.next_action = l.next_action || 'Volver a llamar'; }
+    b.disabled = true;
+    if (await addNote(l, 'llamada', 'No atendió', patch)){ renderDrawer(); toast('Registrado: no atendió' + (patch.next_action_at ? ' · volver a llamar mañana' : '')); }
+    return;
+  }
+  if (b.dataset.quick === 'wasent'){
+    b.disabled = true;
+    const body = $('#dNote').value.trim() || 'Le escribí por WhatsApp';
+    if (await addNote(l, 'whatsapp', body)){ renderDrawer(); toast('Registrado'); }
+    return;
+  }
+  if (b.dataset.delnote){
+    if (!confirm('¿Borrar esta nota?')) return;
+    const {error} = await sb.from('crm_notes').delete().eq('id', b.dataset.delnote);
+    if (error) return toast('No se pudo borrar');
+    crm.notes[l.id] = (crm.notes[l.id] || []).filter(n => n.id !== b.dataset.delnote);
+    renderDrawer(); return;
+  }
+  if (b.id === 'dProvAll'){
+    const zk = zoneKey(l), pk = provKey(l), pv2 = provOf(l);
+    const t = crm.leads.filter(x => zoneKey(x) === zk && provKey(x) === pk && (x.provincia || '') !== pv2);
+    if (!t.length || !confirm(`¿Poner “${pv2}” a ${t.length} prospecto${t.length === 1 ? '' : 's'} de ${zoneOf(l.location)}?`)) return;
+    b.disabled = true;
+    const ids = t.map(x => x.id);
+    for (let i = 0; i < ids.length; i += 200){
+      const {error} = await sb.from('crm_leads').update({provincia: pv2}).in('id', ids.slice(i, i + 200));
+      if (error){ toast('No se pudo guardar: ' + error.message); b.disabled = false; return; }
+    }
+    t.forEach(x => { x.provincia = pv2; });
+    rebuildProv(); renderPipe(); renderDrawer();
+    toast(`Provincia ${pv2} puesta a ${ids.length}`);
+    return;
+  }
+  if (b.id === 'dDelete'){
+    if (!confirm(`¿Eliminar "${l.name}" y todas sus notas? No se puede deshacer.`)) return;
+    const {error} = await sb.from('crm_leads').delete().eq('id', l.id);
+    if (error) return toast('No se pudo eliminar: ' + error.message);
+    crm.leads = crm.leads.filter(x => x.id !== l.id);
+    delete crm.notes[l.id];
+    closeDrawer(); toast('Lead eliminado');
+  }
+});
+$('#dBody').addEventListener('keydown', e => { if (e.target.id === 'dNote' && e.key === 'Enter' && (e.ctrlKey || e.metaKey)){ e.preventDefault(); saveNote(); } });
+function renderDrawerKinds(){ document.querySelectorAll('#dKinds button').forEach(x => x.classList.toggle('on', x.dataset.kind === crm.composeKind)); }
+async function saveNote(){
+  const l = curLead(); if (!l) return;
+  const body = $('#dNote').value.trim();
+  if (!body) return toast('Escribí algo para guardar');
+  $('#dSaveNote').disabled = true;
+  if (await addNote(l, crm.composeKind, body)){ renderDrawer(); toast('Guardado'); }
+  else $('#dSaveNote').disabled = false;
+}
+
+/* ---------- New lead ---------- */
+$('#btnNew').addEventListener('click', () => { $('#newForm').reset(); $('#dlgNew').showModal(); $('#nName').focus(); });
+$('#dlgNew').addEventListener('close', async () => {
+  if ($('#dlgNew').returnValue !== 'ok') return;
+  const name = $('#nName').value.trim(); if (!name) return;
+  const phones = parsePhonesText($('#nPhone').value);
+  const key = phones[0] ? 'p:' + digitsOf(phones[0].n) : 'n:' + fold(name) + ':' + Date.now();
+  const {data, error} = await sb.from('crm_leads').insert({dedupe_key: key, name, phones, location: $('#nLoc').value.trim() || null, source: 'manual'}).select().single();
+  if (error) return toast(/duplicate|unique/i.test(error.message) ? 'Ya existe un lead con ese teléfono' : 'No se pudo crear: ' + error.message);
+  crm.leads.push(data); crm.notes[data.id] = [];
+  if (crm.filter !== 'todos' && crm.filter !== 'activos' && crm.filter !== 'nuevo') crm.filter = 'activos';
+  openDrawer(data.id);
+});
+
+/* ---------- Settings ---------- */
+$('#btnSettings').addEventListener('click', () => {
+  $('#sTemplate').value = settings.template;
+  $('#sMapsKey').value = mapsKey();
+  $('#sMapsLimit').value = mapsLimit();
+  $('#dlgSettings').showModal();
+});
+$('#dlgSettings').addEventListener('close', async () => {
+  settings.template = $('#sTemplate').value; store('template', settings.template);
+  const pw = $('#sPass').value; $('#sPass').value = '';
+  if (pw){
+    if (pw.length < 8) toast('La contraseña tiene que tener al menos 8 caracteres');
+    else { const {error} = await sb.auth.updateUser({password: pw}); toast(error ? 'No se pudo guardar la contraseña: ' + error.message : 'Contraseña guardada. La próxima vez podés entrar con email y contraseña.'); }
+  }
+  const k = $('#sMapsKey').value.trim();
+  if (k !== mapsKey()){ if (!k || /^AIza[\w-]{30,}$/.test(k)) await saveMeta('places_key', {k}); else toast('La clave de Google no parece válida (tiene que empezar con AIza)'); }
+  const lim = parseInt($('#sMapsLimit').value, 10);
+  if (lim > 0 && lim !== mapsLimit()) await saveMeta('places_limit', {n: lim});
+  renderPipe(); if (crm.openId) renderDrawer(); if (!$('#vMaps').hidden) renderMaps();
+});
+
+/* ---------- Export ---------- */
+async function exportCRM(){
+  const {data: notes, error} = await sb.from('crm_notes').select('lead_id,kind,body,created_at').order('created_at', {ascending: true}).range(0, 9999);
+  if (error) return toast('No se pudieron leer las notas');
+  const byLead = {};
+  for (const n of notes || []) (byLead[n.lead_id] ||= []).push(`${isoLocal(new Date(n.created_at))} ${(KIND[n.kind] || [, n.kind])[1]}: ${n.body}`);
+  const head = ['Nombre del complejo','Teléfono/WhatsApp','Página Web','Email','Instagram','Zona','Provincia','Estado','Último contacto','Próxima acción (fecha)','Próxima acción','Notas'];
+  const rows = filterLeads().map(l => [l.name, phonesToText(l.phones), l.web || '', l.email || '', l.instagram || '', l.location || '', provOf(l), ST[l.status] || l.status,
+    l.last_contact_at ? isoLocal(new Date(l.last_contact_at)) : '', l.next_action_at || '', l.next_action || '', (byLead[l.id] || []).join(' | ')]);
+  const csv = [head, ...rows].map(r => r.map(c => { c = String(c ?? ''); return /[";\n]/.test(c) ? '"' + c.replace(/"/g, '""') + '"' : c; }).join(';')).join('\r\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['﻿' + csv], {type: 'text/csv;charset=utf-8'}));
+  a.download = 'crm-prospectos-' + todayISO() + '.csv';
+  document.body.appendChild(a); a.click(); a.remove();
+  toast(`Exportados ${rows.length} leads (vista actual)`);
+}
+$('#btnExport').addEventListener('click', exportCRM);
+
+/* ---------- Import ---------- */
+function crmIndex(){
+  const keys = new Set(), phones = new Set();
+  for (const l of crm.leads){ keys.add(l.dedupe_key); for (const p of l.phones || []) { const d = digitsOf(p.n); if (d.length >= 8) phones.add(d.slice(-10)); } }
+  return {keys, phones};
+}
+function entryPhones(e){ return e.phoneEdit != null ? parsePhonesText(e.phoneEdit) : e.phones.map(p => ({n: fmtPhone(p), k: p.kind})); }
+function entryKey(e){ const ps = entryPhones(e); return ps[0] && digitsOf(ps[0].n).length >= 8 ? 'p:' + digitsOf(ps[0].n) : 'n:' + fold(e.name); }
+function inCRM(e, idx){ return idx.keys.has(entryKey(e)) || entryPhones(e).some(p => idx.phones.has(digitsOf(p.n).slice(-10))); }
+function entryToLead(e){
+  const w = webText(e);
+  return {
+    dedupe_key: entryKey(e), name: e.name, phones: entryPhones(e),
+    web: w ? (/^https?:/.test(w) ? w : 'https://' + w) : null,
+    email: e.emails[0] || null,
+    instagram: e.profile || (e.user ? 'https://www.instagram.com/' + e.user : null),
+    location: cleanLocation(e.location) || null,
+    source: e.posts.some(u => /google\./.test(u)) ? 'Google Maps' : (e.user ? 'Instagram' : 'archivo'),
+    source_url: e.posts[0] || null
+  };
+}
+function renderImport(){
+  const has = entries.length > 0;
+  $('#impResults').hidden = !has;
+  $('#drop').innerHTML = has
+    ? '<strong style="display:inline">+ Sumar otro archivo</strong> <span>· arrastralo o hacé clic</span>'
+    : '<strong>Arrastrá el CSV o el .txt acá, o hacé clic para elegirlo</strong><span>Instagram, Google Maps, PhantomBuster (también lo copiado de la consola).</span>';
+  $('#banners').innerHTML = truncated ? '<div class="banner"><b>El archivo vino cortado.</b> La herramienta de exportación llegó a su límite, así que faltan filas.</div>' : '';
+  if (!has) return;
+  const idx = crmIndex();
+  const valid = [], disc = [];
+  for (const e of entries){ const c = classify(e); (c.ok ? valid : disc).push([e, c]); }
+  const seen = new Set(), state = new Map();
+  for (const [e] of valid){
+    const k = entryKey(e);
+    state.set(e.id, inCRM(e, idx) ? 'crm' : seen.has(k) ? 'rep' : 'new');
+    seen.add(k);
+  }
+  const fresh = valid.filter(([e]) => state.get(e.id) === 'new');
+  $('#iValid').textContent = valid.length;
+  $('#iNew').textContent = fresh.length;
+  $('#iDup').textContent = valid.length - fresh.length;
+  $('#iDisc').textContent = disc.length;
+  $('#cDisc').textContent = disc.length ? '· ' + disc.length : '';
+  $('#btnAdd').disabled = !fresh.length;
+  $('#btnAdd').textContent = fresh.length ? `Agregar ${fresh.length} al CRM` : 'Nada nuevo para agregar';
+
+  $('#tbImp').innerHTML = valid.length ? valid.map(([e]) => {
+    const stt = state.get(e.id);
+    const ps = entryPhones(e);
+    const w = webText(e);
+    return `<tr>
+      <td><div class="name" contenteditable="plaintext-only" spellcheck="false" data-edit="name" data-id="${e.id}">${esc(e.name)}</div>${e.location ? `<div class="meta">${esc(cleanLocation(e.location))}</div>` : ''}</td>
+      <td>${ps.map(p => `<div class="phone"><span class="num">${esc(p.n)}</span><span class="tag ${p.k}">${KIND_LABEL[p.k] || ''}</span></div>`).join('')}</td>
+      <td class="${w ? '' : 'hide-m'}">${w ? `<a class="weblink" href="${esc(webHref(w))}" target="_blank" rel="noopener">${ICON.ext}${esc(webLabel(w))}</a>` : '<span class="muted">—</span>'}</td>
+      <td>${stt === 'crm' ? '<span class="tag muted">Ya en CRM</span>' : stt === 'rep' ? '<span class="tag muted" title="Otro registro de este archivo tiene el mismo teléfono">Repetido</span>' : '<span class="tag wa">Nuevo</span>'}</td>
+      <td style="text-align:right"><button class="ghost sm" data-imp="drop" data-id="${e.id}" title="Descartar">${ICON.x}</button></td>
+    </tr>`;
+  }).join('') : '<tr><td colspan="5" class="empty-state">No quedó ningún lead válido.</td></tr>';
+
+  $('#tbDisc').innerHTML = disc.length ? disc.map(([e, c]) => `
+    <tr>
+      <td><div class="name">${esc(e.name)}</div>${e.location ? `<div class="meta">${esc(cleanLocation(e.location))}</div>` : ''}</td>
+      <td><span class="tag reason">${esc(c.reason)}</span></td>
+      <td class="muted">${esc(c.detail)}</td>
+      <td style="text-align:right">${e.phones.length || e.phoneEdit ? `<button class="sm" data-imp="keep" data-id="${e.id}">Recuperar</button>` : ''}</td>
+    </tr>`).join('') : '<tr><td colspan="4" class="empty-state">Nada descartado.</td></tr>';
+}
+async function addToCRM(){
+  const idx = crmIndex();
+  const rows = entries.filter(e => classify(e).ok && !inCRM(e, idx)).map(entryToLead);
+  const seen = new Set(); const uniq = rows.filter(r => !seen.has(r.dedupe_key) && seen.add(r.dedupe_key));
+  if (!uniq.length) return;
+  $('#btnAdd').disabled = true; $('#btnAdd').textContent = 'Agregando…';
+  let added = [];
+  for (let i = 0; i < uniq.length; i += 300){
+    const {data, error} = await sb.from('crm_leads').upsert(uniq.slice(i, i + 300), {onConflict: 'owner_id,dedupe_key', ignoreDuplicates: true}).select();
+    if (error){ toast('Error al agregar: ' + error.message); break; }
+    added = added.concat(data || []);
+  }
+  crm.leads = crm.leads.concat(added.filter(a => !crm.leads.some(l => l.id === a.id)));
+  toast(`${added.length} lead${added.length === 1 ? '' : 's'} agregado${added.length === 1 ? '' : 's'} al CRM`);
+  entries = []; truncated = false;
+  crm.filter = 'nuevo';
+  setTab('pipe');
+}
+$('#btnAdd').addEventListener('click', addToCRM);
+$('#btnClearImp').addEventListener('click', () => { entries = []; truncated = false; renderImport(); });
+$('#tbImp').addEventListener('click', e => { const b = e.target.closest('[data-imp]'); if (!b) return; const en = entries.find(x => x.id === b.dataset.id); if (en){ en.override = 'drop'; renderImport(); } });
+$('#tbDisc').addEventListener('click', e => { const b = e.target.closest('[data-imp]'); if (!b) return; const en = entries.find(x => x.id === b.dataset.id); if (en){ en.override = 'keep'; renderImport(); } });
+document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.matches && e.target.matches('[data-edit]')){ e.preventDefault(); e.target.blur(); } });
+document.addEventListener('focusout', e => {
+  const el = e.target.closest && e.target.closest('[data-edit]'); if (!el) return;
+  const en = entries.find(x => x.id === el.dataset.id); if (!en) return;
+  const v = el.innerText.replace(/\s+/g, ' ').trim(); if (v) en.name = v;
+});
+
+async function readFile(f){
+  const buf = await f.arrayBuffer();
+  try{ return new TextDecoder('utf-8', {fatal: true}).decode(buf); }
+  catch(e){ return new TextDecoder('windows-1252').decode(buf); }
+}
+async function handleFiles(files){
+  let added = 0;
+  for (const f of files) added += ingest(await readFile(f));
+  renderImport();
+  toast(added ? `${added} registro${added === 1 ? '' : 's'} procesado${added === 1 ? '' : 's'}` : 'No se encontraron filas nuevas');
+}
+const drop = $('#drop'), fileIn = $('#file');
+drop.addEventListener('click', () => fileIn.click());
+drop.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); fileIn.click(); } });
+fileIn.addEventListener('change', () => { if (fileIn.files.length) handleFiles([...fileIn.files]); fileIn.value = ''; });
+['dragenter', 'dragover'].forEach(ev => document.addEventListener(ev, e => { if ($('#vImp').hidden) return; e.preventDefault(); drop.classList.add('over'); }));
+document.addEventListener('dragleave', e => { if (e.target === document.documentElement || !e.relatedTarget) drop.classList.remove('over'); });
+document.addEventListener('drop', e => { if ($('#vImp').hidden) return; e.preventDefault(); drop.classList.remove('over'); if (e.dataTransfer.files.length) handleFiles([...e.dataTransfer.files]); });
+$('#btnPaste').addEventListener('click', () => {
+  const t = $('#pasteArea').value;
+  if (!t.trim()) return toast('No hay texto para procesar');
+  const n = ingest(t); renderImport(); $('#pasteArea').value = ''; $('#pastePanel').open = false;
+  toast(n ? `${n} registros procesados` : 'No se encontraron filas nuevas');
+});
+$('#kw').value = settings.kw;
+$('#optFijos').checked = settings.fijos;
+$('#optUnconfirmed').checked = settings.unconfirmed;
+$('#kw').addEventListener('input', e => { settings.kw = e.target.value; store('kw', settings.kw); renderImport(); });
+$('#optFijos').addEventListener('change', e => { settings.fijos = e.target.checked; store('fijos', settings.fijos); renderImport(); });
+$('#optUnconfirmed').addEventListener('change', e => { settings.unconfirmed = e.target.checked; store('unconfirmed', settings.unconfirmed); renderImport(); });
+
+/* ---------- Settings stored in Supabase (crm_meta) ---------- */
+crm.meta = {};
+async function loadMeta(){
+  const {data, error} = await sb.from('crm_meta').select('*');
+  if (error) return;
+  for (const r of data || []) crm.meta[r.key] = r.value;
+}
+async function saveMeta(key, value){
+  crm.meta[key] = value;
+  const {error} = await sb.from('crm_meta').upsert({key, value, updated_at: new Date().toISOString()}, {onConflict: 'owner_id,key'});
+  if (error){ toast('No se pudo guardar: ' + error.message); return false; }
+  return true;
+}
+const mapsKey = () => (crm.meta.places_key && crm.meta.places_key.k) || '';
+const mapsLimit = () => (crm.meta.places_limit && crm.meta.places_limit.n) || 1000;
+const mapsHistory = () => (crm.meta.places_history && crm.meta.places_history.items) || [];
+async function recordSearch(q, patch){
+  const items = mapsHistory().slice();
+  const k = fold(q).replace(/\s+/g, ' ').trim();
+  let it = items.find(x => x.k === k);
+  if (!it){ it = {k, q, at: new Date().toISOString(), found: 0, added: 0}; items.unshift(it); }
+  Object.assign(it, patch);
+  if (patch.at) { items.splice(items.indexOf(it), 1); items.unshift(it); }
+  await saveMeta('places_history', {items: items.slice(0, 300)});
+}
+const mapsUsed = () => { const u = crm.meta.places_usage; return u && u.month === todayISO().slice(0, 7) ? u.count : 0; };
+
+/* ---------- Buscar en Maps (Google Places API New) ---------- */
+const PLACES_FIELDS = 'places.id,places.displayName,places.formattedAddress,places.internationalPhoneNumber,places.nationalPhoneNumber,places.websiteUri,places.rating,places.userRatingCount,places.googleMapsUri,places.businessStatus,places.primaryTypeDisplayName,nextPageToken';
+const maps = {q: '', results: [], next: null, loading: false, error: '', note: '', sel: new Set(), saved: [], savedLoaded: false, openedSaved: null};
+function saveMapsState(){
+  try{
+    if (!maps.results.length){ localStorage.removeItem('filtroLeads.mapsState'); return; }
+    localStorage.setItem('filtroLeads.mapsState', JSON.stringify({q: maps.q, origQ: maps.origQ, results: maps.results, next: maps.next, note: maps.note, sel: [...maps.sel], savedAt: Date.now()}));
+  }catch(e){}
+}
+const keyOf = q => fold(q).replace(/\s+/g, ' ').trim();
+async function loadSaved(){
+  const {data, error} = await sb.from('crm_maps_searches').select('id,k,q,results,sel,updated_at,created_at').order('updated_at', {ascending: false}).range(0, 199);
+  if (error) return;
+  maps.saved = data || []; maps.savedLoaded = true;
+  if (maps.origQ && maps.results.length && !maps.saved.some(s => s.k === keyOf(maps.origQ))) persistSearch();
+}
+let persistT;
+function persistSearchSoon(){ clearTimeout(persistT); persistT = setTimeout(persistSearch, 700); }
+async function persistSearch(){
+  clearTimeout(persistT);
+  if (!maps.results.length || !maps.origQ) return;
+  const row = {k: keyOf(maps.origQ), q: maps.origQ, results: maps.results, sel: [...maps.sel], next: maps.next, note: maps.note || null, updated_at: new Date().toISOString()};
+  const {data, error} = await sb.from('crm_maps_searches').upsert(row, {onConflict: 'owner_id,k'}).select('id,k,q,results,sel,updated_at,created_at').single();
+  if (error || !data) return;
+  maps.saved = [data, ...(maps.saved || []).filter(s => s.k !== data.k)];
+  if (!$('#vMaps').hidden) renderMapsHistory();
+}
+function openSaved(k){
+  const s = (maps.saved || []).find(x => x.k === k); if (!s) return;
+  Object.assign(maps, {q: s.q, origQ: s.q, results: s.results || [], next: null, note: '', error: '', sel: new Set(s.sel || []), restored: false, openedSaved: s.updated_at});
+  $('#mapsQ').value = s.q;
+  renderMaps();
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+async function deleteSaved(id){
+  const s = (maps.saved || []).find(x => x.id === id); if (!s) return;
+  if (!confirm(`¿Borrar la búsqueda guardada “${s.q}”? Los leads que ya agregaste quedan en el CRM.`)) return;
+  const {error} = await sb.from('crm_maps_searches').delete().eq('id', id);
+  if (error) return toast('No se pudo borrar');
+  maps.saved = maps.saved.filter(x => x.id !== id);
+  renderMapsHistory(); toast('Búsqueda borrada');
+}
+function restoreMapsState(){
+  try{
+    const s = JSON.parse(localStorage.getItem('filtroLeads.mapsState') || 'null');
+    if (!s || !s.results || !s.results.length || Date.now() - s.savedAt > 7 * 86400000) return;
+    Object.assign(maps, {q: s.q, origQ: s.origQ, results: s.results, next: s.next, note: s.note || '', sel: new Set(s.sel || [])});
+    maps.restored = true;
+  }catch(e){}
+}
+const maxRev = () => { const v = parseInt(load('maxRev', '400'), 10); return v > 0 ? v : 0; };
+
+function explainPlacesError(msg){
+  msg = String(msg || '');
+  if (/referer|referrer/i.test(msg)) return 'Google rechazó el pedido por la restricción de sitio. En la clave tiene que figurar exactamente https://checkinn.com.ar/prospectos/* (puede tardar unos minutos en aplicarse).';
+  if (/not been used|is disabled|SERVICE_DISABLED/i.test(msg)) return 'Places API (New) no está habilitada en el proyecto de Google Cloud.';
+  if (/API key not valid|API_KEY_INVALID/i.test(msg)) return 'La clave no es válida. Revisá en ⚙️ Ajustes que esté completa.';
+  if (/billing/i.test(msg)) return 'Google pide una cuenta de facturación activa en el proyecto.';
+  if (/blocked|API_KEY_SERVICE_BLOCKED/i.test(msg)) return 'La clave no tiene permiso para Places API (New). Revisá las restricciones de API de la clave.';
+  if (/quota|RESOURCE_EXHAUSTED/i.test(msg)) return 'Se alcanzó el tope de consultas configurado en Google Cloud.';
+  return 'Google respondió: ' + msg;
+}
+async function placesSearch(q, pageToken){
+  const month = todayISO().slice(0, 7), used = mapsUsed(), limit = mapsLimit();
+  if (used >= limit) throw new Error(`Llegaste al límite de ${limit} búsquedas de este mes. Se renueva el 1°. Podés cambiarlo en ⚙️ Ajustes.`);
+  const body = {textQuery: q, languageCode: 'es', regionCode: 'AR', pageSize: 20};
+  if (pageToken) body.pageToken = pageToken;
+  let res;
+  try{
+    res = await fetch('https://places.googleapis.com/v1/places:searchText', {
+      method: 'POST', referrerPolicy: 'no-referrer-when-downgrade',
+      headers: {'Content-Type': 'application/json', 'X-Goog-Api-Key': mapsKey(), 'X-Goog-FieldMask': PLACES_FIELDS},
+      body: JSON.stringify(body)
+    });
+  }catch(e){ throw new Error('No se pudo conectar con Google. Revisá tu conexión.'); }
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(explainPlacesError(json.error && (json.error.message || json.error.status) || res.status));
+  await saveMeta('places_usage', {month, count: used + 1});
+  return json;
+}
+function placeToCand(p){
+  const raw = p.internationalPhoneNumber || p.nationalPhoneNumber || '';
+  let phones = [];
+  if (raw){
+    const n = normAR(raw);
+    if (n.ok) phones = [{n: '+549' + n.nsn, k: n.mobile ? 'wa' : 'unk'}];
+    else if (/^\s*\+/.test(raw) && !digitsOf(raw).startsWith('54') && digitsOf(raw).length >= 9) phones = [{n: '+' + digitsOf(raw), k: 'intl'}];
+  }
+  const name = (p.displayName && p.displayName.text) || 'Sin nombre';
+  const type = (p.primaryTypeDisplayName && p.primaryTypeDisplayName.text) || '';
+  const w = p.websiteUri ? toWeb(p.websiteUri) : null;
+  const hay = fold(name + ' ' + type).replace(/[#\s]+/g, ' ');
+  return {
+    id: p.id, name, type, phones, web: w ? w.url : null,
+    location: cleanLocation(p.formattedAddress || ''), maps: p.googleMapsUri || '',
+    rating: p.rating, reviews: p.userRatingCount,
+    closed: p.businessStatus && p.businessStatus !== 'OPERATIONAL',
+    kw: keywords().find(k => hay.includes(k)) || ''
+  };
+}
+function candState(c, idx){
+  if (idx.urls.has(c.maps) || c.phones.some(p => idx.phones.has(digitsOf(p.n).slice(-10)))) return 'crm';
+  if (c.closed) return 'closed';
+  if (c.kw) return 'kw';
+  if (!c.phones.length) return 'nophone';
+  if (maxRev() && (c.reviews || 0) > maxRev()) return 'big';
+  return 'new';
+}
+function mapsIndex(){ const idx = crmIndex(); idx.urls = new Set(crm.leads.map(l => l.source_url).filter(Boolean)); return idx; }
+
+async function runMapsSearch(more, force){
+  if (maps.loading) return;
+  const q = more ? maps.q : $('#mapsQ').value.trim();
+  if (!q){ $('#mapsQ').focus(); return; }
+  if (!more && !force){
+    if (!maps.savedLoaded) await loadSaved();
+    if (maps.saved.some(s => s.k === keyOf(q))){ openSaved(keyOf(q)); toast('Abrí tu búsqueda guardada: no gastó búsquedas'); return; }
+  }
+  const prevSel = force ? new Set(maps.sel) : null, prevIds = force ? new Set(maps.results.map(r => r.id)) : null;
+  maps.loading = true; maps.error = '';
+  if (!more){ maps.q = q; maps.results = []; maps.next = null; maps.sel = new Set(); maps.note = ''; }
+  maps.restored = false; maps.openedSaved = null;
+  renderMaps();
+  try{
+    let json = await placesSearch(q, more ? maps.next : null);
+    if (!more && !(json.places && json.places.length) && !/alojamiento/i.test(q)){
+      const q2 = /\bcaba[ñn]as?\b/i.test(q) ? q.replace(/\b(caba[ñn]as?)\b/i, '$1 de alojamiento') : q + ' alojamiento';
+      const j2 = await placesSearch(q2, null);
+      if (j2.places && j2.places.length){ json = j2; maps.q = q2; maps.note = `Google no encontró “${q}”, así que busqué “${q2}”.`; }
+    }
+    const idx = mapsIndex();
+    for (const p of json.places || []){
+      if (maps.results.some(r => r.id === p.id)) continue;
+      const c = placeToCand(p);
+      maps.results.push(c);
+      if (prevIds && prevIds.has(c.id)){ if (prevSel.has(c.id)) maps.sel.add(c.id); }
+      else if (candState(c, idx) === 'new') maps.sel.add(c.id);
+    }
+    maps.next = json.nextPageToken || null;
+    if (!more) maps.origQ = q;
+    const hp = {q: maps.origQ || q, found: maps.results.length}; if (!more) hp.at = new Date().toISOString();
+    await recordSearch(maps.origQ || q, hp);
+    await persistSearch();
+    maps.debug = (json.places && json.places.length) ? '' : JSON.stringify(json).slice(0, 400);
+  }catch(e){ maps.error = e.message; }
+  maps.loading = false;
+  renderMaps();
+}
+function renderMapsHistory(){
+  const hist = mapsHistory(); const saved = maps.saved || []; const idx = mapsIndex();
+  if (!maps.savedLoaded && !maps.savedLoading && sb && user){ maps.savedLoading = true; loadSaved().then(() => { maps.savedLoading = false; renderMapsHistory(); }); }
+  const zones = new Map();
+  for (const l of crm.leads){ const z = zoneOf(l.location); if (!z) continue; const k = provKey(l) + '|' + fold(z); if (!zones.has(k)) zones.set(k, [z, 0, provOf(l)]); zones.get(k)[1]++; }
+  const zl = [...zones.entries()].sort((a, b) => (!a[1][2] - !b[1][2]) || a[1][2].localeCompare(b[1][2], 'es') || a[1][0].localeCompare(b[1][0], 'es'));
+  $('#mapsHist').querySelector('summary').textContent = `Destinos ya trabajados (${zl.length} zonas en tu CRM${saved.length ? ` · ${saved.length} búsquedas guardadas` : ''})`;
+  $('#mapsHistBody').innerHTML = `
+    <strong style="font-size:14.5px">Zonas que ya tenés en el CRM</strong>
+    <div class="quick" style="margin:6px 0 14px">${zl.length ? zl.map(([k, [z, n, pv]]) => `<button class="sm" data-zone="${esc(k)}" title="Ver estos leads en el Pipeline">${esc(z)}${pv ? ` <span class="muted">· ${esc(pv)}</span>` : ''} <span class="muted">${n}</span></button>`).join('') : '<span class="muted" style="font-size:14.5px">Todavía no hay.</span>'}</div>
+    <strong style="font-size:14.5px">Búsquedas guardadas</strong>
+    ${!maps.savedLoaded ? '<p class="hint" style="margin:4px 0 0">Cargando…</p>' : saved.length ? `<div style="margin-top:6px;display:grid;gap:2px">${saved.map(s => {
+        const res = s.results || []; const ss = new Set(s.k === keyOf(maps.origQ || '') ? [...maps.sel] : (s.sel || [])); const pend = res.filter(c => ss.has(c.id) && candState(c, idx) === 'new').length; const h = hist.find(x => x.k === s.k);
+        return `<div class="row" style="font-size:15px;padding:7px 0;border-bottom:1px solid var(--border);gap:10px">
+          <span style="font-weight:500">${esc(s.q)}</span>
+          <span class="muted">${esc(fmtStamp(s.updated_at))} · ${res.length} resultados${h && h.added ? ` · ${h.added} agregados` : ''}${pend ? ` · <b style="color:var(--warn)">${pend} tildado${pend === 1 ? '' : 's'} sin agregar</b>` : ' · <b style="color:var(--ok)">✓ revisada</b>'}</span>
+          <span class="spacer"></span>
+          <button class="sm" data-open="${esc(s.k)}">Abrir</button>
+          <button class="ghost sm" data-delsaved="${esc(s.id)}" title="Borrar búsqueda guardada">${ICON.x}</button>
+        </div>`; }).join('')}</div>`
+      : '<p class="hint" style="margin:4px 0 0">Cada búsqueda que hagas queda guardada acá con tus tildes, y la podés reabrir sin gastar búsquedas.</p>'}`;
+}
+const MAPS_STATE = {
+  crm: ['Ya en CRM', 'muted'], closed: ['Cerrado', 'reason'], kw: ['Rubro excluido', 'reason'], nophone: ['Sin teléfono', 'muted'], big: ['Muchas reseñas', 'unk'], new: ['Nuevo', 'wa']
+};
+function renderMaps(){
+  if (!maps.loading) saveMapsState();
+  const hasKey = !!mapsKey();
+  $('#mapsSetup').hidden = hasKey;
+  $('#mapsMain').hidden = !hasKey;
+  if (!hasKey) return;
+  if (document.activeElement !== $('#mapsMaxRev')) $('#mapsMaxRev').value = maxRev() || '';
+  const used = mapsUsed(), limit = mapsLimit();
+  $('#mapsUsage').innerHTML = `Este mes usaste <b>${used}</b> de ${limit} búsquedas gratis` + (used >= limit * 0.9 ? ' · <span class="overdue">casi en el límite</span>' : '') + '. Cada página de 20 resultados cuenta como 1.';
+  renderMapsHistory();
+  $('#mapsGo').disabled = maps.loading;
+  $('#mapsGo').textContent = maps.loading && !maps.results.length ? 'Buscando…' : 'Buscar';
+  const box = $('#mapsResults');
+  const err = (maps.error ? `<div class="banner" style="background:var(--danger-soft);color:var(--danger);margin:0 0 12px">${esc(maps.error)}</div>` : '')
+    + (maps.note && !maps.error ? `<p class="hint" style="margin:0 0 10px">ℹ️ ${esc(maps.note)}</p>` : '')
+    + (maps.openedSaved && maps.results.length && !maps.loading ? `<div class="row" style="margin:0 0 10px;gap:10px"><span class="hint" style="margin:0">📁 Búsqueda guardada · última vez ${esc(fmtStamp(maps.openedSaved))}. No gastó búsquedas.</span><button class="sm" id="mapsRefresh">Actualizar desde Google (gasta 1)</button></div>` : '')
+    + (maps.restored && maps.results.length && !maps.loading ? `<p class="hint" style="margin:0 0 10px">↺ Esta es tu última búsqueda, con lo que tenías tildado. No gastó ninguna búsqueda nueva.</p>` : '');
+  if (!maps.results.length){
+    box.innerHTML = err + (maps.loading ? '<div class="empty-state">Buscando en Google Maps…</div>'
+      : maps.q ? `<div class="card empty-state">No hubo resultados para “${esc(maps.q)}”. Probá con otra zona o palabra.${maps.debug != null ? `<div style="margin-top:10px;font:13.5px ui-monospace,monospace;word-break:break-all;opacity:.8">Respuesta de Google: ${esc(maps.debug || '(vacía)')}</div>` : ''}</div>`
+      : `<div class="card empty-state">Escribí qué y dónde buscar.<div class="quick" style="justify-content:center;margin-top:12px">${['cabañas Tandil', 'complejos Villa Gesell', 'cabañas Mina Clavero', 'apart San Martín de los Andes'].map(s => `<button class="sm" data-mq="${esc(s)}">${esc(s)}</button>`).join('')}</div></div>`);
+    return;
+  }
+  const idx = mapsIndex();
+  const states = maps.results.map(c => [c, candState(c, idx)]);
+  for (const [c, s] of states) if (s === 'crm') maps.sel.delete(c.id);
+  const selectable = states.filter(([, s]) => s !== 'crm');
+  const nSel = maps.sel.size;
+  const allNew = states.filter(([, s]) => s === 'new');
+  const allOn = allNew.length && allNew.every(([c]) => maps.sel.has(c.id));
+  box.innerHTML = err + `
+    <div class="card">
+      <div class="row" style="padding:10px 14px;border-bottom:1px solid var(--border);font-size:15px">
+        <label class="row" style="gap:8px;cursor:pointer"><input type="checkbox" id="mapsAll" ${allOn ? 'checked' : ''}> Seleccionar los nuevos con teléfono</label>
+        <span class="spacer"></span><span class="muted">${maps.results.length} resultados · ${nSel} seleccionados</span>
+      </div>
+      ${states.map(([c, s]) => `
+        <label style="display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:10px;padding:11px 14px;border-bottom:1px solid var(--border);cursor:${s === 'crm' ? 'default' : 'pointer'};${s === 'new' ? '' : 'opacity:.75'}">
+          <input type="checkbox" data-pid="${esc(c.id)}" ${maps.sel.has(c.id) ? 'checked' : ''} ${s === 'crm' ? 'disabled' : ''} style="margin-top:3px">
+          <div style="min-width:0">
+            <div class="name">${esc(c.name)}</div>
+            <div class="meta">${[c.location ? esc(c.location) : '', c.rating ? `★ ${String(c.rating).replace('.', ',')} (${c.reviews || 0})` : '', c.type ? esc(c.type) : '', c.maps ? `<a href="${esc(c.maps)}" target="_blank" rel="noopener">ver en Maps</a>` : ''].filter(Boolean).join(' · ')}</div>
+            ${c.phones.length || c.web ? `<div class="row" style="gap:8px;margin-top:3px">${c.phones.map(p => `<span class="num">${esc(p.n)}</span><span class="tag ${p.k}">${KIND_LABEL[p.k]}</span>`).join('')}${c.web ? `<a class="weblink" href="${esc(webHref(c.web))}" target="_blank" rel="noopener" title="Abrir sitio web">${ICON.ext}${esc(webLabel(c.web))}</a>` : ''}</div>` : ''}
+          </div>
+          <span class="tag ${MAPS_STATE[s][1]}" style="align-self:start">${MAPS_STATE[s][0]}</span>
+        </label>`).join('')}
+      <div class="row" style="padding:12px 14px;background:var(--surface-2)">
+        ${maps.next ? `<button id="mapsMore" ${maps.loading ? 'disabled' : ''}>${maps.loading ? 'Cargando…' : 'Ver 20 más'}</button>` : `<span class="muted" style="font-size:14.5px">${maps.results.length >= 60 ? 'Google muestra hasta 60 por búsqueda: probá otra zona para ver más.' : 'No hay más resultados.'}</span>`}
+        <span class="spacer"></span>
+        <button class="primary" id="mapsAdd" ${nSel ? '' : 'disabled'}>${nSel ? `Agregar ${nSel} al CRM` : 'Elegí cuáles agregar'}</button>
+      </div>
+    </div>
+    ${selectable.length ? '' : '<p class="hint">Todos estos ya están en tu CRM.</p>'}`;
+}
+async function addMapsToCRM(){
+  const rows = maps.results.filter(c => maps.sel.has(c.id)).map(c => ({
+    dedupe_key: c.phones[0] ? 'p:' + digitsOf(c.phones[0].n) : 'g:' + c.id,
+    name: c.name, phones: c.phones, web: c.web, location: c.location || null,
+    source: 'Google Maps', source_url: c.maps || null
+  }));
+  const seen = new Set(); const uniq = rows.filter(r => !seen.has(r.dedupe_key) && seen.add(r.dedupe_key));
+  if (!uniq.length) return;
+  $('#mapsAdd').disabled = true; $('#mapsAdd').textContent = 'Agregando…';
+  const {data, error} = await sb.from('crm_leads').upsert(uniq, {onConflict: 'owner_id,dedupe_key', ignoreDuplicates: true}).select();
+  if (error){ toast('Error al agregar: ' + error.message); renderMaps(); return; }
+  crm.leads = crm.leads.concat((data || []).filter(a => !crm.leads.some(l => l.id === a.id)));
+  maps.sel = new Set();
+  persistSearch();
+  if (maps.origQ){ const it = mapsHistory().find(x => x.k === fold(maps.origQ).replace(/\s+/g, ' ').trim()); await recordSearch(maps.origQ, {added: ((it && it.added) || 0) + (data || []).length}); }
+  renderMaps();
+  toast(`${(data || []).length} agregado${(data || []).length === 1 ? '' : 's'} al CRM · están en Pipeline → Nuevo`);
+}
+$('#mapsHistBody').addEventListener('click', e => {
+  const o = e.target.closest('[data-open]'); if (o){ openSaved(o.dataset.open); return; }
+  const d = e.target.closest('[data-delsaved]'); if (d){ deleteSaved(d.dataset.delsaved); return; }
+  const b = e.target.closest('[data-zone]'); if (!b) return;
+  crm.zone = b.dataset.zone; store('zone', crm.zone); crm.filter = 'todos'; setTab('pipe');
+});
+$('#mapsForm').addEventListener('submit', e => { e.preventDefault(); runMapsSearch(false); });
+$('#mapsResults').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.mq){ $('#mapsQ').value = b.dataset.mq; runMapsSearch(false); }
+  else if (b.id === 'mapsMore') runMapsSearch(true);
+  else if (b.id === 'mapsRefresh'){ $('#mapsQ').value = maps.origQ || maps.q; runMapsSearch(false, true); }
+  else if (b.id === 'mapsAdd') addMapsToCRM();
+});
+$('#mapsResults').addEventListener('change', e => {
+  const t = e.target;
+  if (t.id === 'mapsAll'){
+    const idx = mapsIndex();
+    for (const c of maps.results) if (candState(c, idx) === 'new'){ t.checked ? maps.sel.add(c.id) : maps.sel.delete(c.id); }
+    renderMaps(); persistSearchSoon(); return;
+  }
+  if (t.dataset.pid){ t.checked ? maps.sel.add(t.dataset.pid) : maps.sel.delete(t.dataset.pid); renderMaps(); persistSearchSoon(); }
+});
+let maxRevT;
+function applyMaxRev(){
+  const v = parseInt($('#mapsMaxRev').value, 10);
+  const nv = v > 0 ? String(v) : '0';
+  if (nv === String(maxRev())) return;
+  store('maxRev', nv);
+  const idx = mapsIndex();
+  for (const c of maps.results){ const s = candState(c, idx); if (s === 'new') maps.sel.add(c.id); else if (s === 'big') maps.sel.delete(c.id); }
+  renderMaps(); persistSearchSoon();
+}
+$('#mapsMaxRev').addEventListener('input', () => { clearTimeout(maxRevT); maxRevT = setTimeout(applyMaxRev, 350); });
+$('#mapsKeySave').addEventListener('click', async () => {
+  const k = $('#mapsKeyInput').value.trim();
+  if (!/^AIza[\w-]{30,}$/.test(k)) return toast('Esa clave no parece válida: tiene que empezar con AIza');
+  if (await saveMeta('places_key', {k})){ $('#mapsKeyInput').value = ''; toast('Clave guardada'); renderMaps(); $('#mapsQ').focus(); }
+});
+
+/* ---------- Refresh when coming back to the tab ---------- */
+document.addEventListener('visibilitychange', async () => {
+  if (document.visibilityState !== 'visible' || !user || Date.now() - crm.loadedAt < 60000) return;
+  try{ await sb.auth.getSession(); await loadLeads(); renderPipe(); if (crm.openId && !$('#drawer').contains(document.activeElement)) renderDrawer(); }catch(e){}
+});
+
+boot();
+</script>
+</body>
+</html>
