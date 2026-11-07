@@ -890,11 +890,11 @@ const webHref = w => !w ? '' : (/^https?:/i.test(w) ? w : 'https://' + w);
 const webLabel = w => String(w || '').replace(/^https?:\/\/(www\.)?/i, '').replace(/\/$/, '');
 const phonesToText = arr => (arr || []).map(p => p.n).join(' / ');
 /* ---------- Plantillas de WhatsApp (crm_meta.wa_templates) ---------- */
-const TPL_CAROS = `Hola, ¿cómo están? Soy María, de Loomi Suite. Vi {nombre} en {localidad} y les escribo porque muchos complejos de cabañas pagan sistemas pensados para hoteles, por módulos (web, motor de reservas, check-in, sincronización), y terminan pagando más de USD 40 por cabaña por mes.
+const TPL_CAROS = `¿Cuánto pagás por tu sistema de gestión?
+Web, motor de reservas, check-in: con 4 o 5 cabañas pasa fácil los USD 200 por mes.
+Loomi Suite hace todo eso desde USD 25. loomisuite.net
 
-Loomi Suite junta todo eso en un solo plan para complejos chicos: calendario, sincronización con Airbnb y Booking, web propia con pedidos por WhatsApp, guía para el huésped y un asistente que responde consultas. De 5 a 20 unidades son USD 45 por mes, y si abren la cuenta antes del 31/12 quedan en USD 35 para siempre.
-
-Si quieren, les muestro la demo en 10 minutos o la ven acá: loomisuite.net`;
+María · Loomi Suite`;
 function templates(){
   const t = crm.meta && crm.meta.wa_templates;
   if (t && Array.isArray(t.items)) return t.items;
