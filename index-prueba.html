@@ -255,6 +255,17 @@ details.more>summary:hover{color:var(--text)}
 button.danger{border-color:var(--border-strong)}
 button.danger:hover{border-color:var(--danger)}
 
+/* Ventana centrada (en vez de panel lateral) */
+.drawer{top:50%;left:50%;right:auto;bottom:auto;width:min(680px,calc(100% - 32px));max-height:calc(100vh - 48px);height:auto;border:1px solid var(--border-strong);border-radius:18px;overflow:hidden;transform:translate(-50%,-48%) scale(.97);opacity:0;pointer-events:none;transition:transform .18s ease,opacity .18s ease}
+.drawer.on{transform:translate(-50%,-50%);opacity:1;pointer-events:auto}
+.scrim{background:rgba(0,0,0,.55)}
+
+/* Ventana grande, en dos columnas */
+.drawer{width:min(1180px,calc(100% - 96px));height:auto;max-height:calc(100vh - 64px)}
+.d-cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:32px;align-items:start}
+.d-col{min-width:0}
+@media (max-width:900px){.drawer{width:calc(100% - 24px)}.d-cols{grid-template-columns:1fr;gap:0}}
+
 /* Import view */
 .drop{border:1.5px dashed var(--border-strong);border-radius:var(--radius);background:var(--surface);padding:24px 18px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s}
 .drop:hover,.drop.over{border-color:var(--accent);background:var(--accent-soft)}
@@ -1285,7 +1296,7 @@ function renderDrawer(){
   const meta = [zone ? `<span class="zone">${esc(zone)}</span>` : '', street ? `<span>${esc(street)}</span>` : '', pv ? `<span>${esc(pv)}</span>` : '', ig, src].filter(Boolean).join('');
   const webHref = l.web ? (/^https?:/.test(l.web) ? l.web : 'https://' + l.web) : '';
 
-  $('#dBody').innerHTML = `
+  $('#dBody').innerHTML = `<div class="d-cols"><div class="d-col">
     <div class="d-meta"><span class="st st-${l.status}">${ST[l.status] || l.status}</span>${meta}</div>
 
     <div class="d-sec d-contact">
@@ -1328,7 +1339,8 @@ function renderDrawer(){
       ${l.next_action_at || l.next_action ? '<button class="sm ghost" data-next="clear">Quitar</button>' : ''}
     </div>
 
-    <div class="d-sec">
+    </div><div class="d-col">
+    <div class="d-sec" style="margin-top:0">
       <h3>Registrar contacto</h3>
       <div class="seg" id="dKinds">${KINDS.map(([k, label, ic]) => `<button type="button" data-kind="${k}" class="${crm.composeKind === k ? 'on' : ''}">${label}</button>`).join('')}</div>
       <textarea id="dNote" rows="3" placeholder="Qué hablaron, cuántas unidades tiene, qué sistema usa, objeciones…"></textarea>
@@ -1372,7 +1384,8 @@ function renderDrawer(){
           <button class="danger sm" id="dDelete">Eliminar lead</button>
         </div>
       </details>
-    </div>`;
+    </div>
+    </div></div>`;
 }
 
 $('#dName').addEventListener('change', e => { const v = e.target.value.trim(); const l = curLead(); if (l && v && v !== l.name) updateLead(l.id, {name: v}); });
