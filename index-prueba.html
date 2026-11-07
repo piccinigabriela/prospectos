@@ -218,6 +218,43 @@ details.more>summary::-webkit-details-marker{display:none}
 details.more>summary::before{content:"› ";display:inline-block;transition:transform .15s}
 details.more[open]>summary::before{transform:rotate(90deg)}
 
+/* Panel lateral (plantilla Prospectos) */
+.drawer{background:var(--bg);border-left:1px solid var(--border)}
+.d-head{padding:18px 20px 12px;border-bottom:1px solid var(--border);background:var(--bg)}
+.d-head input{font-size:20px;font-weight:600;letter-spacing:-.01em}
+.d-body{padding:16px 20px 48px}
+.d-meta{margin-bottom:18px;display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;font-size:13px;color:var(--muted)}
+.d-meta a{color:var(--accent-text)}
+.d-sec{margin-top:24px}
+.d-sec h3{font-size:11px;letter-spacing:.06em;color:var(--subtle);margin:0 0 10px}
+.d-contact{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:2px 14px}
+.cr-act{display:flex;gap:8px;margin-left:auto}
+.d-contact .contact-row,.d-msg{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0;padding:12px 0;border-bottom:1px solid var(--border)}
+.d-contact > :last-child{border-bottom:0}
+.d-msg label{display:flex;align-items:center;gap:10px;margin:0;font-size:13px;color:var(--muted)}
+.d-msg select{max-width:240px}
+.d-msg details{flex-basis:100%}
+.d-msgbody{white-space:pre-wrap;font-size:13.5px;line-height:1.5;margin-top:8px;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:var(--surface-2);color:var(--text)}
+.contact-row .btn.sm{height:36px;padding:0 14px;font-size:14px}
+.grid2 label,.field{font-size:13px;font-weight:550;gap:6px}
+.grid2 input,.grid2 select{height:44px}
+.quick{margin-top:10px}
+.quick button{border-radius:999px;border-color:var(--border);background:transparent;color:var(--muted);padding:5px 12px}
+.quick button:hover{background:var(--surface-2);color:var(--text)}
+.seg button{border-color:var(--border);background:transparent;color:var(--muted);padding:6px 14px}
+.seg button:hover{background:var(--surface-2);color:var(--text)}
+.seg button.on{color:var(--text)}
+#dNote{background:var(--surface-2);border-color:var(--border-strong);border-radius:10px;padding:10px 12px}
+.note{grid-template-columns:28px 1fr auto;padding:12px 0}
+.note .k{width:28px;height:28px;background:var(--surface-2);color:var(--accent-text)}
+.note .k i{width:6px;height:6px;border-radius:50%;background:var(--subtle)}
+.note .k svg{width:14px;height:14px}
+.note .when{font-size:12px;font-weight:550;color:var(--muted);margin-bottom:2px}
+details.more>summary{color:var(--muted);font-size:13px;font-weight:550}
+details.more>summary:hover{color:var(--text)}
+button.danger{border-color:var(--border-strong)}
+button.danger:hover{border-color:var(--danger)}
+
 /* Import view */
 .drop{border:1.5px dashed var(--border-strong);border-radius:var(--radius);background:var(--surface);padding:24px 18px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s}
 .drop:hover,.drop.over{border-color:var(--accent);background:var(--accent-soft)}
@@ -776,7 +813,7 @@ const ST = Object.fromEntries(STATUSES);
 const CLOSED = new Set(['cliente','perdido']);
 const KINDS = [['llamada','Llamada','📞'],['whatsapp','WhatsApp','💬'],['email','Email','✉️'],['visita','Visita','📍'],['nota','Nota','📝']];
 const KIND = Object.fromEntries(KINDS.map(k => [k[0], k]));
-const KIND_LABEL = {wa: 'WhatsApp ✓', unk: 'A confirmar', fijo: 'Fijo', intl: 'Extranjero'};
+const KIND_LABEL = {wa: 'WhatsApp', unk: 'A confirmar', fijo: 'Fijo', intl: 'Extranjero'};
 
 const ICON = {
   wa: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 21l2.1-5.5A8.4 8.4 0 1 1 21 11.5z"/></svg>',
@@ -1244,29 +1281,31 @@ function renderDrawer(){
   const src = l.source_url ? `<a href="${esc(l.source_url)}" target="_blank" rel="noopener">${/google\./.test(l.source_url) ? 'ver en Maps' : 'ver post'}</a>` : '';
   const ig = l.instagram ? `<a href="${esc(l.instagram)}" target="_blank" rel="noopener">@${esc((l.instagram.match(/instagram\.com\/([\w.]+)/i) || [, l.instagram])[1])}</a>` : '';
   const pv = provOf(l);
-  const meta = [l.location ? esc(l.location) : '', pv && !fold(l.location || '').includes(fold(pv)) ? esc(pv) : '', ig, src].filter(Boolean).join(' · ');
+  const zone = zoneOf(l.location), street = streetOf(l.location, zone);
+  const meta = [zone ? `<span class="zone">${esc(zone)}</span>` : '', street ? `<span>${esc(street)}</span>` : '', pv ? `<span>${esc(pv)}</span>` : '', ig, src].filter(Boolean).join('');
   const webHref = l.web ? (/^https?:/.test(l.web) ? l.web : 'https://' + l.web) : '';
 
   $('#dBody').innerHTML = `
-    ${meta ? `<div class="meta" style="margin-top:-2px">${meta}</div>` : ''}
+    <div class="d-meta"><span class="st st-${l.status}">${ST[l.status] || l.status}</span>${meta}</div>
 
-    <div class="d-sec">
-      ${(l.phones || []).some(p => p.k !== 'fijo') ? (() => { const ct = curTemplate(); return `<div class="row" style="gap:8px;margin-bottom:8px;flex-wrap:wrap">
-        <label style="display:flex;align-items:center;gap:8px;margin:0;font-size:15px">Mensaje
+    <div class="d-sec d-contact">
+      ${(l.phones || []).some(p => p.k !== 'fijo') ? (() => { const ct = curTemplate(); return `<div class="d-msg">
+        <label>Mensaje
           <select id="dTpl" style="max-width:240px">${templates().map(t => `<option value="${esc(t.id)}" ${ct && ct.id === t.id ? 'selected' : ''}>${esc(t.name || 'Sin nombre')}</option>`).join('')}<option value="none" ${!ct ? 'selected' : ''}>Sin texto</option></select>
         </label>
-        ${ct ? `<details style="flex-basis:100%"><summary style="cursor:pointer;font-size:14.5px">Ver el mensaje</summary><div style="white-space:pre-wrap;font-size:14.5px;line-height:1.45;margin-top:6px;padding:10px 12px;border:1px solid var(--border);border-radius:10px">${esc(fillTpl(ct.body, l))}</div></details>` : ''}
+        ${ct ? `<details class="more"><summary>Ver el mensaje</summary><div class="d-msgbody">${esc(fillTpl(ct.body, l))}</div></details>` : ''}
       </div>`; })() : ''}
       ${(l.phones || []).map(p => `
         <div class="contact-row">
           <span class="num">${esc(p.n)}</span><span class="tag ${p.k}">${KIND_LABEL[p.k] || ''}</span>
-          <span class="spacer"></span>
+          <span class="cr-act">
           ${p.k !== 'fijo' ? `<a class="btn sm primary" href="${esc(waLink(p, l))}" target="_blank" rel="noopener" data-act="openwa">${ICON.wa} WhatsApp</a>` : ''}
           <a class="btn sm" href="tel:${esc(p.n)}" data-act="opencall">${ICON.tel} Llamar</a>
-        </div>`).join('') || '<p class="muted" style="margin:0">Sin teléfono cargado.</p>'}
-      ${(l.web || l.email) ? `<div class="contact-row" style="margin-top:8px">
+          </span>
+        </div>`).join('') || '<p class="sub" style="margin:0">Sin teléfono cargado.</p>'}
+      ${(l.web || l.email) ? `<div class="contact-row">
         ${l.web ? `<a class="btn sm" href="${esc(webHref)}" target="_blank" rel="noopener">${ICON.ext} ${esc(l.web.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, ''))}</a>` : ''}
-        ${l.email ? `<a class="btn sm" href="mailto:${esc(l.email)}">✉️ ${esc(l.email)}</a>` : ''}
+        ${l.email ? `<a class="btn sm" href="mailto:${esc(l.email)}">${esc(l.email)}</a>` : ''}
       </div>` : ''}
     </div>
 
@@ -1291,7 +1330,7 @@ function renderDrawer(){
 
     <div class="d-sec">
       <h3>Registrar contacto</h3>
-      <div class="seg" id="dKinds">${KINDS.map(([k, label, ic]) => `<button type="button" data-kind="${k}" class="${crm.composeKind === k ? 'on' : ''}">${ic} ${label}</button>`).join('')}</div>
+      <div class="seg" id="dKinds">${KINDS.map(([k, label, ic]) => `<button type="button" data-kind="${k}" class="${crm.composeKind === k ? 'on' : ''}">${label}</button>`).join('')}</div>
       <textarea id="dNote" rows="3" placeholder="Qué hablaron, cuántas unidades tiene, qué sistema usa, objeciones…"></textarea>
       <div class="row" style="margin-top:8px">
         <button class="primary sm" id="dSaveNote">Guardar</button>
@@ -1299,7 +1338,7 @@ function renderDrawer(){
         <button class="sm" data-quick="noatendio">No atendió</button>
         <button class="sm" data-quick="wasent">Le escribí por WhatsApp</button>
       </div>
-      <p class="hint">Ctrl + Enter guarda. Registrar un contacto pasa a “Contactado” los leads nuevos.</p>
+      <p class="hint">Ctrl + Enter guarda</p>
     </div>
 
     <div class="d-sec">
@@ -1307,10 +1346,10 @@ function renderDrawer(){
       <div class="timeline">
         ${notes == null ? '<p class="muted">Cargando…</p>' : notes.length ? notes.map(n => `
           <div class="note">
-            <div class="k" title="${esc((KIND[n.kind] || [])[1] || '')}">${(KIND[n.kind] || [, , '📝'])[2]}</div>
+            <div class="k" title="${esc((KIND[n.kind] || [])[1] || '')}">${n.kind === 'llamada' ? ICON.tel : n.kind === 'whatsapp' ? ICON.wa : '<i></i>'}</div>
             <div><div class="when">${esc((KIND[n.kind] || [, 'Nota'])[1])} · ${esc(fmtStamp(n.created_at))}</div>${n.body ? `<div class="body">${esc(n.body)}</div>` : ''}</div>
             <button class="ghost sm" data-delnote="${n.id}" title="Borrar nota">${ICON.x}</button>
-          </div>`).join('') : '<p class="muted" style="margin:0">Todavía no hay registros.</p>'}
+          </div>`).join('') : '<p class="sub" style="margin:0">Sin registros todavía.</p>'}
       </div>
     </div>
 
