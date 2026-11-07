@@ -377,10 +377,10 @@ dialog label{display:grid;gap:4px;font-size:14.5px;color:var(--muted)}
 <dialog id="dlgSettings">
   <form method="dialog">
     <h3>Ajustes</h3>
-    <label>Mensaje inicial de WhatsApp
-      <textarea id="sTemplate" rows="5" placeholder="Hola! Soy Gabi de Loomi Suite. Vi {nombre} y quería contarte…"></textarea>
-    </label>
-    <p class="hint" style="margin-top:-6px">Se carga en el chat al tocar el botón de WhatsApp. <b>{nombre}</b> se reemplaza por el nombre del complejo. Dejalo vacío para abrir el chat sin texto.</p>
+    <strong style="font-size:15px">Plantillas de WhatsApp</strong>
+    <p class="hint" style="margin:2px 0 8px">En la ficha elegís cuál usar y se carga en el chat al tocar WhatsApp. Se reemplazan <b>{nombre}</b>, <b>{localidad}</b> y <b>{provincia}</b>. Se guardan en tu cuenta (compu y celular).</p>
+    <div id="sTpls"></div>
+    <div class="row" style="margin:6px 0 16px"><button type="button" class="sm" id="sTplAdd">+ Nueva plantilla</button></div>
     <label>Contraseña para entrar al CRM (opcional)
       <input id="sPass" type="password" autocomplete="new-password" placeholder="Dejalo vacío para no cambiarla">
     </label>
@@ -889,10 +889,34 @@ function parsePhonesText(text, prev = []){
 const webHref = w => !w ? '' : (/^https?:/i.test(w) ? w : 'https://' + w);
 const webLabel = w => String(w || '').replace(/^https?:\/\/(www\.)?/i, '').replace(/\/$/, '');
 const phonesToText = arr => (arr || []).map(p => p.n).join(' / ');
+/* ---------- Plantillas de WhatsApp (crm_meta.wa_templates) ---------- */
+const TPL_CAROS = `Hola, ¿cómo están? Soy María, de Loomi Suite. Vi {nombre} en {localidad} y les escribo porque muchos complejos de cabañas pagan sistemas pensados para hoteles, por módulos (web, motor de reservas, check-in, sincronización), y terminan pagando más de USD 40 por cabaña por mes.
+
+Loomi Suite junta todo eso en un solo plan para complejos chicos: calendario, sincronización con Airbnb y Booking, web propia con pedidos por WhatsApp, guía para el huésped y un asistente que responde consultas. De 5 a 20 unidades son USD 45 por mes, y si abren la cuenta antes del 31/12 quedan en USD 35 para siempre.
+
+Si quieren, les muestro la demo en 10 minutos o la ven acá: loomisuite.net`;
+function templates(){
+  const t = crm.meta && crm.meta.wa_templates;
+  if (t && Array.isArray(t.items)) return t.items;
+  const out = [], legacy = (settings.template || '').trim();
+  if (legacy) out.push({id: 't-inicial', name: 'Primer contacto', body: legacy});
+  out.push({id: 't-caros', name: 'Usan sistemas caros', body: TPL_CAROS});
+  return out;
+}
+let tplSel = load('tplSel', '');
+function curTemplate(){
+  if (tplSel === 'none') return null;
+  const ts = templates();
+  return ts.find(t => t.id === tplSel) || ts[0] || null;
+}
+const fillTpl = (body, lead) => String(body || '')
+  .replace(/\{nombre\}/gi, lead.name || '')
+  .replace(/\{localidad\}/gi, zoneOf(lead.location) || 'su zona')
+  .replace(/\{provincia\}/gi, provOf(lead) || '');
 function waLink(p, lead){
   let url = 'https://wa.me/' + digitsOf(p.n);
-  const t = (settings.template || '').trim();
-  if (t) url += '?text=' + encodeURIComponent(t.replace(/\{nombre\}/gi, lead.name || ''));
+  const t = curTemplate();
+  if (t && t.body.trim()) url += '?text=' + encodeURIComponent(fillTpl(t.body, lead).trim());
   return url;
 }
 const cleanLocation = s => String(s || '').replace(/,?\s*Argentina$/i, '').replace(/\bProvincia de /i, '').replace(/\s*\b[A-Z]\d{4}[A-Z]{0,3}\b/, '').replace(/,\s*,/g, ',').replace(/^[,\s]+|[,\s]+$/g, '');
@@ -1168,6 +1192,12 @@ function renderDrawer(){
     ${meta ? `<div class="meta" style="margin-top:-2px">${meta}</div>` : ''}
 
     <div class="d-sec">
+      ${(l.phones || []).some(p => p.k !== 'fijo') ? (() => { const ct = curTemplate(); return `<div class="row" style="gap:8px;margin-bottom:8px;flex-wrap:wrap">
+        <label style="display:flex;align-items:center;gap:8px;margin:0;font-size:15px">Mensaje
+          <select id="dTpl" style="max-width:240px">${templates().map(t => `<option value="${esc(t.id)}" ${ct && ct.id === t.id ? 'selected' : ''}>${esc(t.name || 'Sin nombre')}</option>`).join('')}<option value="none" ${!ct ? 'selected' : ''}>Sin texto</option></select>
+        </label>
+        ${ct ? `<details style="flex-basis:100%"><summary style="cursor:pointer;font-size:14.5px">Ver el mensaje</summary><div style="white-space:pre-wrap;font-size:14.5px;line-height:1.45;margin-top:6px;padding:10px 12px;border:1px solid var(--border);border-radius:10px">${esc(fillTpl(ct.body, l))}</div></details>` : ''}
+      </div>`; })() : ''}
       ${(l.phones || []).map(p => `
         <div class="contact-row">
           <span class="num">${esc(p.n)}</span><span class="tag ${p.k}">${KIND_LABEL[p.k] || ''}</span>
@@ -1253,6 +1283,7 @@ $('#dName').addEventListener('keydown', e => { if (e.key === 'Enter') e.target.b
 $('#dBody').addEventListener('change', e => {
   const l = curLead(); if (!l) return;
   const t = e.target;
+  if (t.id === 'dTpl'){ tplSel = t.value; store('tplSel', tplSel); renderDrawer(); renderPipe(); return; }
   if (t.id === 'dStatus') return updateLead(l.id, {status: t.value}).then(() => toast('Estado: ' + ST[t.value]));
   if (t.id === 'dNextDate') return updateLead(l.id, {next_action_at: t.value || null}).then(renderDrawer);
   if (t.id === 'dNextText') return updateLead(l.id, {next_action: t.value.trim() || null});
@@ -1347,13 +1378,14 @@ $('#dlgNew').addEventListener('close', async () => {
 
 /* ---------- Settings ---------- */
 $('#btnSettings').addEventListener('click', () => {
-  $('#sTemplate').value = settings.template;
+  renderTplEditor(templates());
   $('#sMapsKey').value = mapsKey();
   $('#sMapsLimit').value = mapsLimit();
   $('#dlgSettings').showModal();
 });
 $('#dlgSettings').addEventListener('close', async () => {
-  settings.template = $('#sTemplate').value; store('template', settings.template);
+  const items = readTplEditor();
+  if (!(crm.meta && crm.meta.wa_templates) || JSON.stringify(items) !== JSON.stringify(templates())){ if (await saveMeta('wa_templates', {items})) toast('Plantillas guardadas'); renderPipe(); if (crm.openId) renderDrawer(); }
   const pw = $('#sPass').value; $('#sPass').value = '';
   if (pw){
     if (pw.length < 8) toast('La contraseña tiene que tener al menos 8 caracteres');
@@ -1511,6 +1543,28 @@ $('#optUnconfirmed').checked = settings.unconfirmed;
 $('#kw').addEventListener('input', e => { settings.kw = e.target.value; store('kw', settings.kw); renderImport(); });
 $('#optFijos').addEventListener('change', e => { settings.fijos = e.target.checked; store('fijos', settings.fijos); renderImport(); });
 $('#optUnconfirmed').addEventListener('change', e => { settings.unconfirmed = e.target.checked; store('unconfirmed', settings.unconfirmed); renderImport(); });
+
+function renderTplEditor(list){
+  $('#sTpls').innerHTML = list.map(t => `<div class="tpl" data-id="${esc(t.id)}" style="padding:10px 0;border-bottom:1px solid var(--border)">
+    <div class="row" style="gap:8px;margin-bottom:6px"><input class="tName" value="${esc(t.name || '')}" placeholder="Nombre de la plantilla" style="flex:1"><button type="button" class="danger sm" data-deltpl>Borrar</button></div>
+    <textarea class="tBody" rows="7" placeholder="Hola, soy María de Loomi Suite. Vi {nombre}…">${esc(t.body || '')}</textarea>
+  </div>`).join('') || '<p class="hint">No hay plantillas. Agregá una.</p>';
+}
+function readTplEditor(){
+  return [...document.querySelectorAll('#sTpls .tpl')].map(d => ({id: d.dataset.id, name: d.querySelector('.tName').value.trim() || 'Sin nombre', body: d.querySelector('.tBody').value.trim()})).filter(t => t.body);
+}
+$('#sTplAdd').addEventListener('click', () => {
+  const list = [...document.querySelectorAll('#sTpls .tpl')].map(d => ({id: d.dataset.id, name: d.querySelector('.tName').value, body: d.querySelector('.tBody').value}));
+  list.push({id: 't' + Date.now().toString(36), name: '', body: ''});
+  renderTplEditor(list);
+  const last = [...document.querySelectorAll('#sTpls .tName')].pop(); if (last) last.focus();
+});
+$('#sTpls').addEventListener('click', e => {
+  const b = e.target.closest('[data-deltpl]'); if (!b) return;
+  const d = b.closest('.tpl');
+  if (d.querySelector('.tBody').value.trim() && !confirm('¿Borrar esta plantilla?')) return;
+  d.remove();
+});
 
 /* ---------- Settings stored in Supabase (crm_meta) ---------- */
 crm.meta = {};
