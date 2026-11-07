@@ -266,6 +266,45 @@ button.danger:hover{border-color:var(--danger)}
 .d-col{min-width:0}
 @media (max-width:900px){.drawer{width:calc(100% - 24px)}.d-cols{grid-template-columns:1fr;gap:0}}
 
+/* Buscar en Maps (plantilla Prospectos) */
+.mp-search{display:flex;gap:10px;margin-bottom:14px}
+.mp-input{position:relative;flex:1 1 auto;display:block}
+.mp-input svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);width:18px;height:18px;color:var(--subtle)}
+.mp-input input{width:100%;height:48px;padding-left:44px;font-size:15px}
+.mp-search button{height:48px;padding:0 24px}
+.mp-bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 24px;margin-bottom:16px;font-size:13px;color:var(--muted)}
+.mp-filter{display:flex;align-items:center;gap:8px}
+.mp-filter input{width:76px;height:34px;padding:0 8px;text-align:center;font:500 13px var(--font-mono)}
+.mp-quota{display:flex;align-items:center;gap:12px}
+.mp-quota b{color:var(--text);font:500 13px var(--font-mono)}
+.mp-quota .bar{width:120px;height:6px;border-radius:999px;background:var(--surface-3);overflow:hidden}
+.mp-quota .bar i{display:block;height:100%;background:var(--accent);border-radius:inherit}
+.mp-quota .bar i.hot{background:var(--danger)}
+#mapsHistBody strong{display:block;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--subtle)}
+.mp-note{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 14px;font-size:13px;color:var(--muted)}
+.mp-note.is-error{padding:10px 14px;border-radius:10px;background:var(--danger-soft);color:var(--danger)}
+.mp-empty{border:1px solid var(--border);border-radius:14px;background:var(--surface);padding:48px 24px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:12px}
+.mp-empty .t{margin:0;font-size:16px;font-weight:600}
+.mp-empty .s{margin:0;color:var(--muted);font-size:13px}
+.mp-empty .quick{justify-content:center;margin:4px 0 0}
+.mp-debug{font:12px var(--font-mono);word-break:break-all;color:var(--muted)}
+.mp-list{border:1px solid var(--border);border-radius:14px;background:var(--surface);overflow:hidden}
+.mp-head{display:flex;align-items:center;justify-content:space-between;gap:12px;height:44px;padding:0 16px;background:var(--surface-2);border-bottom:1px solid var(--border);font-size:13px;color:var(--muted)}
+.mp-head label{display:flex;align-items:center;gap:10px;cursor:pointer;color:var(--text);font-weight:550}
+.mp-count b{color:var(--text);font-family:var(--font-mono);font-weight:500}
+.mp-row{display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:14px;align-items:start;padding:14px 16px;border-bottom:1px solid var(--border);cursor:pointer}
+.mp-row:hover{background:var(--surface-2)}
+.mp-row.is-sel{background:var(--accent-soft);box-shadow:inset 2px 0 0 var(--accent)}
+.mp-row.is-off{cursor:default}
+.mp-row.is-off .mp-main{opacity:.82}
+.mp-row input[type=checkbox],.mp-head input[type=checkbox]{width:18px;height:18px;margin:2px 0 0;accent-color:var(--accent)}
+.mp-main{min-width:0}
+.mp-meta{display:flex;flex-wrap:wrap;gap:2px 12px;font-size:13px;line-height:18px;color:var(--muted);margin-top:2px}
+.mp-meta a{color:var(--accent-text)}
+.mp-contact{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin-top:6px}
+.mp-foot{display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--surface-2)}
+
+main.wrap{padding-top:24px}
 /* Import view */
 .drop{border:1.5px dashed var(--border-strong);border-radius:var(--radius);background:var(--surface);padding:24px 18px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s}
 .drop:hover,.drop.over{border-color:var(--accent);background:var(--accent-soft)}
@@ -374,15 +413,14 @@ dialog label{display:grid;gap:4px;font-size:14.5px;color:var(--muted)}
       <div class="row"><input id="mapsKeyInput" placeholder="AIza…" style="flex:1 1 280px;font-family:ui-monospace,monospace" autocomplete="off" spellcheck="false"><button class="primary" id="mapsKeySave">Guardar clave</button></div>
     </div>
     <div id="mapsMain" hidden>
-      <form class="row" id="mapsForm" style="margin-bottom:6px">
-        <input id="mapsQ" placeholder="cabañas Tandil" style="flex:1 1 240px" autocomplete="off">
+      <form class="mp-search" id="mapsForm">
+        <label class="mp-input"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="mapsQ" placeholder="cabañas Tandil" autocomplete="off" aria-label="Qué y dónde buscar"></label>
         <button class="primary" id="mapsGo" type="submit">Buscar</button>
       </form>
-      <div class="row" style="margin:0 0 6px;font-size:15px;color:var(--muted)">
-        <label class="row" style="gap:6px">Destildar los que tengan más de <input id="mapsMaxRev" type="number" min="0" step="50" style="width:80px;padding:4px 8px"> reseñas</label>
-        <span class="hint" style="margin:0">(suelen ser hoteles grandes; vacío = no filtrar)</span>
+      <div class="mp-bar">
+        <label class="mp-filter" title="Suelen ser hoteles grandes; vacío = no filtrar">Destildar con más de <input id="mapsMaxRev" type="number" min="0" step="50" placeholder="—"> reseñas</label>
+        <div class="mp-quota" id="mapsUsage" title="Cada página de 20 resultados cuenta como 1"></div>
       </div>
-      <p class="hint" id="mapsUsage" style="margin:0 0 10px"></p>
       <details class="panel" id="mapsHist" style="margin:0 0 14px"><summary>Destinos ya trabajados</summary><div class="panel-body" id="mapsHistBody"></div></details>
       <div id="mapsResults"></div>
     </div>
@@ -1860,9 +1898,9 @@ function renderMapsHistory(){
   const zl = [...zones.entries()].sort((a, b) => (!a[1][2] - !b[1][2]) || a[1][2].localeCompare(b[1][2], 'es') || a[1][0].localeCompare(b[1][0], 'es'));
   $('#mapsHist').querySelector('summary').textContent = `Destinos ya trabajados (${zl.length} zonas en tu CRM${saved.length ? ` · ${saved.length} búsquedas guardadas` : ''})`;
   $('#mapsHistBody').innerHTML = `
-    <strong style="font-size:14.5px">Zonas que ya tenés en el CRM</strong>
+    <strong>Zonas que ya tenés en el CRM</strong>
     <div class="quick" style="margin:6px 0 14px">${zl.length ? zl.map(([k, [z, n, pv]]) => `<button class="sm" data-zone="${esc(k)}" title="Ver estos leads en el Pipeline">${esc(z)}${pv ? ` <span class="muted">· ${esc(pv)}</span>` : ''} <span class="muted">${n}</span></button>`).join('') : '<span class="muted" style="font-size:14.5px">Todavía no hay.</span>'}</div>
-    <strong style="font-size:14.5px">Búsquedas guardadas</strong>
+    <strong>Búsquedas guardadas</strong>
     ${!maps.savedLoaded ? '<p class="hint" style="margin:4px 0 0">Cargando…</p>' : saved.length ? `<div style="margin-top:6px;display:grid;gap:2px">${saved.map(s => {
         const res = s.results || []; const ss = new Set(s.k === keyOf(maps.origQ || '') ? [...maps.sel] : (s.sel || [])); const pend = res.filter(c => ss.has(c.id) && candState(c, idx) === 'new').length; const h = hist.find(x => x.k === s.k);
         return `<div class="row" style="font-size:15px;padding:7px 0;border-bottom:1px solid var(--border);gap:10px">
@@ -1885,19 +1923,20 @@ function renderMaps(){
   if (!hasKey) return;
   if (document.activeElement !== $('#mapsMaxRev')) $('#mapsMaxRev').value = maxRev() || '';
   const used = mapsUsed(), limit = mapsLimit();
-  $('#mapsUsage').innerHTML = `Este mes usaste <b>${used}</b> de ${limit} búsquedas gratis` + (used >= limit * 0.9 ? ' · <span class="overdue">casi en el límite</span>' : '') + '. Cada página de 20 resultados cuenta como 1.';
+  const pct = Math.min(100, Math.round(used / Math.max(1, limit) * 100));
+  $('#mapsUsage').innerHTML = `<span>Este mes <b>${used}</b> de ${limit} búsquedas</span><span class="bar"><i class="${used >= limit * 0.9 ? 'hot' : ''}" style="width:${pct}%"></i></span>`;
   renderMapsHistory();
   $('#mapsGo').disabled = maps.loading;
   $('#mapsGo').textContent = maps.loading && !maps.results.length ? 'Buscando…' : 'Buscar';
   const box = $('#mapsResults');
-  const err = (maps.error ? `<div class="banner" style="background:var(--danger-soft);color:var(--danger);margin:0 0 12px">${esc(maps.error)}</div>` : '')
-    + (maps.note && !maps.error ? `<p class="hint" style="margin:0 0 10px">ℹ️ ${esc(maps.note)}</p>` : '')
-    + (maps.openedSaved && maps.results.length && !maps.loading ? `<div class="row" style="margin:0 0 10px;gap:10px"><span class="hint" style="margin:0">📁 Búsqueda guardada · última vez ${esc(fmtStamp(maps.openedSaved))}. No gastó búsquedas.</span><button class="sm" id="mapsRefresh">Actualizar desde Google (gasta 1)</button></div>` : '')
-    + (maps.restored && maps.results.length && !maps.loading ? `<p class="hint" style="margin:0 0 10px">↺ Esta es tu última búsqueda, con lo que tenías tildado. No gastó ninguna búsqueda nueva.</p>` : '');
+  const err = (maps.error ? `<div class="mp-note is-error">${esc(maps.error)}</div>` : '')
+    + (maps.note && !maps.error ? `<p class="mp-note">${esc(maps.note)}</p>` : '')
+    + (maps.openedSaved && maps.results.length && !maps.loading ? `<div class="mp-note"><span>Búsqueda guardada · última vez ${esc(fmtStamp(maps.openedSaved))}. No gastó búsquedas.</span><button class="sm" id="mapsRefresh">Actualizar desde Google (gasta 1)</button></div>` : '')
+    + (maps.restored && maps.results.length && !maps.loading ? `<p class="mp-note">Es tu última búsqueda, con lo que tenías tildado. No gastó búsquedas nuevas.</p>` : '');
   if (!maps.results.length){
-    box.innerHTML = err + (maps.loading ? '<div class="empty-state">Buscando en Google Maps…</div>'
-      : maps.q ? `<div class="card empty-state">No hubo resultados para “${esc(maps.q)}”. Probá con otra zona o palabra.${maps.debug != null ? `<div style="margin-top:10px;font:13.5px ui-monospace,monospace;word-break:break-all;opacity:.8">Respuesta de Google: ${esc(maps.debug || '(vacía)')}</div>` : ''}</div>`
-      : `<div class="card empty-state">Escribí qué y dónde buscar.<div class="quick" style="justify-content:center;margin-top:12px">${['cabañas Tandil', 'complejos Villa Gesell', 'cabañas Mina Clavero', 'apart San Martín de los Andes'].map(s => `<button class="sm" data-mq="${esc(s)}">${esc(s)}</button>`).join('')}</div></div>`);
+    box.innerHTML = err + (maps.loading ? '<div class="mp-empty"><p class="t">Buscando en Google Maps…</p></div>'
+      : maps.q ? `<div class="mp-empty"><p class="t">Sin resultados para “${esc(maps.q)}”</p><p class="s">Probá con otra zona o palabra.</p>${maps.debug != null ? `<div class="mp-debug">Respuesta de Google: ${esc(maps.debug || '(vacía)')}</div>` : ''}</div>`
+      : `<div class="mp-empty"><p class="t">Escribí qué y dónde buscar</p><div class="quick">${['cabañas Tandil', 'complejos Villa Gesell', 'cabañas Mina Clavero', 'apart San Martín de los Andes'].map(s => `<button class="sm" data-mq="${esc(s)}">${esc(s)}</button>`).join('')}</div></div>`);
     return;
   }
   const idx = mapsIndex();
@@ -1907,29 +1946,30 @@ function renderMaps(){
   const nSel = maps.sel.size;
   const allNew = states.filter(([, s]) => s === 'new');
   const allOn = allNew.length && allNew.every(([c]) => maps.sel.has(c.id));
+  const ST_CLS = {muted: 'st-nuevo', reason: 'st-perdido', unk: 'st-sin_respuesta', wa: 'st-cliente'};
   box.innerHTML = err + `
-    <div class="card">
-      <div class="row" style="padding:10px 14px;border-bottom:1px solid var(--border);font-size:15px">
-        <label class="row" style="gap:8px;cursor:pointer"><input type="checkbox" id="mapsAll" ${allOn ? 'checked' : ''}> Seleccionar los nuevos con teléfono</label>
-        <span class="spacer"></span><span class="muted">${maps.results.length} resultados · ${nSel} seleccionados</span>
+    <div class="mp-list">
+      <div class="mp-head">
+        <label><input type="checkbox" id="mapsAll" ${allOn ? 'checked' : ''}> Seleccionar los nuevos con teléfono</label>
+        <span class="mp-count">${maps.results.length} resultados · <b>${nSel}</b> seleccionados</span>
       </div>
       ${states.map(([c, s]) => `
-        <label style="display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:10px;padding:11px 14px;border-bottom:1px solid var(--border);cursor:${s === 'crm' ? 'default' : 'pointer'};${s === 'new' ? '' : 'opacity:.75'}">
-          <input type="checkbox" data-pid="${esc(c.id)}" ${maps.sel.has(c.id) ? 'checked' : ''} ${s === 'crm' ? 'disabled' : ''} style="margin-top:3px">
-          <div style="min-width:0">
+        <label class="mp-row ${s === 'new' ? '' : 'is-off'} ${maps.sel.has(c.id) ? 'is-sel' : ''}">
+          <input type="checkbox" data-pid="${esc(c.id)}" ${maps.sel.has(c.id) ? 'checked' : ''} ${s === 'crm' ? 'disabled' : ''}>
+          <div class="mp-main">
             <div class="name">${esc(c.name)}</div>
-            <div class="meta">${[c.location ? esc(c.location) : '', c.rating ? `★ ${String(c.rating).replace('.', ',')} (${c.reviews || 0})` : '', c.type ? esc(c.type) : '', c.maps ? `<a href="${esc(c.maps)}" target="_blank" rel="noopener">ver en Maps</a>` : ''].filter(Boolean).join(' · ')}</div>
-            ${c.phones.length || c.web ? `<div class="row" style="gap:8px;margin-top:3px">${c.phones.map(p => `<span class="num">${esc(p.n)}</span><span class="tag ${p.k}">${KIND_LABEL[p.k]}</span>`).join('')}${c.web ? `<a class="weblink" href="${esc(webHref(c.web))}" target="_blank" rel="noopener" title="Abrir sitio web">${ICON.ext}${esc(webLabel(c.web))}</a>` : ''}</div>` : ''}
+            <div class="mp-meta">${[c.location ? esc(c.location) : '', c.rating ? `★ ${String(c.rating).replace('.', ',')} (${c.reviews || 0})` : '', c.type ? esc(c.type) : '', c.maps ? `<a href="${esc(c.maps)}" target="_blank" rel="noopener">ver en Maps</a>` : ''].filter(Boolean).map(x => `<span>${x}</span>`).join('')}</div>
+            ${c.phones.length || c.web ? `<div class="mp-contact">${c.phones.map(p => `<span class="num">${esc(p.n)}</span><span class="tag ${p.k}">${KIND_LABEL[p.k]}</span>`).join('')}${c.web ? `<a class="weblink" href="${esc(webHref(c.web))}" target="_blank" rel="noopener" title="Abrir sitio web">${ICON.ext}${esc(webLabel(c.web))}</a>` : ''}</div>` : ''}
           </div>
-          <span class="tag ${MAPS_STATE[s][1]}" style="align-self:start">${MAPS_STATE[s][0]}</span>
+          <span class="st ${ST_CLS[MAPS_STATE[s][1]] || 'st-nuevo'}">${MAPS_STATE[s][0]}</span>
         </label>`).join('')}
-      <div class="row" style="padding:12px 14px;background:var(--surface-2)">
-        ${maps.next ? `<button id="mapsMore" ${maps.loading ? 'disabled' : ''}>${maps.loading ? 'Cargando…' : 'Ver 20 más'}</button>` : `<span class="muted" style="font-size:14.5px">${maps.results.length >= 60 ? 'Google muestra hasta 60 por búsqueda: probá otra zona para ver más.' : 'No hay más resultados.'}</span>`}
+      <div class="mp-foot">
+        ${maps.next ? `<button id="mapsMore" ${maps.loading ? 'disabled' : ''}>${maps.loading ? 'Cargando…' : 'Ver 20 más'}</button>` : `<span class="sub">${maps.results.length >= 60 ? 'Google muestra hasta 60 por búsqueda: probá otra zona para ver más.' : 'No hay más resultados.'}</span>`}
         <span class="spacer"></span>
         <button class="primary" id="mapsAdd" ${nSel ? '' : 'disabled'}>${nSel ? `Agregar ${nSel} al CRM` : 'Elegí cuáles agregar'}</button>
       </div>
     </div>
-    ${selectable.length ? '' : '<p class="hint">Todos estos ya están en tu CRM.</p>'}`;
+    ${selectable.length ? '' : '<p class="mp-note">Todos estos ya están en tu CRM.</p>'}`;
 }
 async function addMapsToCRM(){
   const rows = maps.results.filter(c => maps.sel.has(c.id)).map(c => ({
