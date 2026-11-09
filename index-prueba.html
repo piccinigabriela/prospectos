@@ -260,6 +260,7 @@ dialog label{display:grid;gap:4px;font-size:14.5px;color:var(--muted)}
         <option value="p2-3">Sin TACC: cocina con cuidados</option>
         <option value="p2-4">Sin TACC: cocina 100 % sin gluten</option>
         <option value="p3-1">Sin lactosa: no ofrecen</option>
+        <option value="p6-1">Quieren estar en la guía</option>
       </select>
       <select id="pSort" aria-label="Ordenar">
         <option value="next">Ordenar: próxima acción</option>
@@ -843,23 +844,25 @@ function zoneMatch(l, z){
 }
 
 /* ---------- Encuesta sin TACC / sin lactosa (columna encuesta de crm_leads) ---------- */
-// Se manda por WhatsApp (plantilla "Encuesta sin TACC"); la respuesta se pega en la ficha: "1-1, 2-2, 3-2, 4-3, 5-2".
+// Se manda por WhatsApp (plantilla "Encuesta sin TACC"); la respuesta se pega en la ficha: "1-1, 2-2, 3-2, 4-3, 5-2, 6-1".
+// p6 = permiso para aparecer en una futura guía o buscador de alojamientos aptos (sin ese "Sí" no se publica a nadie).
 const ENC_Q = [
   ['p1', 'Desayuno', ['Sí, incluido', 'Sí, con cargo', 'No, pero hay cocina', 'No']],
   ['p2', 'Sin TACC', ['No ofrecen', 'Envasados', 'Cocina con cuidados', 'Cocina 100 % sin gluten']],
   ['p3', 'Sin lactosa', ['No', 'A pedido', 'Siempre']],
   ['p4', 'Se lo piden', ['Nunca', 'A veces', 'Seguido']],
   ['p5', 'Lo cuentan', ['Sí', 'No']],
+  ['p6', 'Quiere estar en la guía', ['Sí', 'No']],
 ];
 function parseEncuesta(text){
   const s = String(text || '');
   const out = {};
   // pares "pregunta-respuesta": 1-1, 2)3, 3:2, "4 = 3"
-  for (const m of s.matchAll(/(?:^|[^\d])([1-5])\s*[-–—:.)=]\s*([1-4])(?!\d)/g)) out['p' + m[1]] = Number(m[2]);
+  for (const m of s.matchAll(/(?:^|[^\d])([1-6])\s*[-–—:.)=]\s*([1-4])(?!\d)/g)) out['p' + m[1]] = Number(m[2]);
   if (!Object.keys(out).length){
     // solo las respuestas en orden: "1 2 2 3 2" o "12232"
     const d = (s.match(/[1-4]/g) || []);
-    if (d.length === 5) d.forEach((v, i) => { out['p' + (i + 1)] = Number(v); });
+    if (d.length === 5 || d.length === 6) d.forEach((v, i) => { out['p' + (i + 1)] = Number(v); });
   }
   for (const [k, , opts] of ENC_Q) if (out[k] && out[k] > opts.length) delete out[k];
   return Object.keys(out).length ? out : null;
@@ -944,7 +947,7 @@ Loomi Suite hace todo eso desde USD 25. loomisuite.net
 
 María · Loomi Suite`;
 const TPL_ENCUESTA = `Relevamiento: alojamientos aptos para celíacos e intolerantes a la lactosa en Argentina.
-Son 5 preguntas y se contestan con números. Al final les mando de regalo un manual con todo lo que conviene saber.
+Son 6 preguntas y se contestan con números. Al final les mando de regalo un manual con todo lo que conviene saber.
 
 1. ¿Ofrecen desayuno?
 1) Sí, incluido · 2) Sí, con cargo · 3) No, pero hay cocina equipada · 4) No
@@ -961,7 +964,10 @@ Son 5 preguntas y se contestan con números. Al final les mando de regalo un man
 5. ¿Lo cuentan en su web o en sus avisos?
 1) Sí · 2) No
 
-Pueden contestar así: 1-1, 2-2, 3-2, 4-3, 5-2
+6. ¿Les gustaría aparecer gratis en una guía de alojamientos aptos para celíacos e intolerantes a la lactosa?
+1) Sí · 2) No
+
+Pueden contestar así: 1-1, 2-2, 3-2, 4-3, 5-2, 6-1
 
 María · Loomi Suite`;
 function templates(){
@@ -1307,7 +1313,7 @@ function renderDrawer(){
       <h3>Encuesta sin TACC y sin lactosa</h3>
       ${l.encuesta ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">${ENC_Q.map(([k, label]) => encAns(l, k) ? `<span class="tag muted">${esc(label)}: ${esc(encAns(l, k))}</span>` : '').join('')}${encOport(l) ? '<span class="tag wa">Oportunidad: lo piden y no lo cuentan</span>' : ''}</div>` : ''}
       <div class="row" style="gap:8px">
-        <input id="dEnc" placeholder="${l.encuesta ? 'Pegar otra respuesta para corregir' : 'Pegá la respuesta: 1-1, 2-2, 3-2, 4-3, 5-2'}" style="flex:1;min-width:0">
+        <input id="dEnc" placeholder="${l.encuesta ? 'Pegar otra respuesta para corregir' : 'Pegá la respuesta: 1-1, 2-2, 3-2, 4-3, 5-2, 6-1'}" style="flex:1;min-width:0">
         <button class="sm primary" id="dEncSave">Guardar</button>
         ${l.encuesta ? '<button class="sm ghost" id="dEncDel">Borrar</button>' : ''}
       </div>
@@ -1415,7 +1421,7 @@ $('#dBody').addEventListener('click', async e => {
   if (b.id === 'dEncSave'){
     const raw = $('#dEnc').value.trim();
     const enc = parseEncuesta(raw);
-    if (!enc){ toast('No entendí la respuesta. Ejemplo: 1-1, 2-2, 3-2, 4-3, 5-2'); return; }
+    if (!enc){ toast('No entendí la respuesta. Ejemplo: 1-1, 2-2, 3-2, 4-3, 5-2, 6-1'); return; }
     const value = {...enc, raw, at: new Date().toISOString()};
     if (await updateLead(l.id, {encuesta: value})){
       toast('Encuesta guardada' + (encOport({encuesta: value}) ? ' · Oportunidad' : ''));
