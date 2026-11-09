@@ -4,55 +4,44 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Prospectos</title>
-<meta name="theme-color" content="#121311">
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400..700&family=Geist+Mono:wght@400..600&display=swap">
+<meta name="theme-color" content="#0E151C">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <style>
-/* Plantilla "Prospectos" — oscuro por defecto, claro si el sistema lo pide.
-   Se mantienen los nombres de variables de la app; solo cambian los valores. */
+/* Paleta "Bruma" — alto contraste, sin grises apagados */
 :root{
-  --bg:#121311; --surface:#1a1c19; --surface-2:#222520; --surface-3:#2c302a;
-  --text:#eceee9; --muted:#a4aa9f; --subtle:#8b9286; --border:#2e322c; --border-strong:#4a5046;
-  --accent:#6cc396; --accent-hover:#84cfa6; --accent-ink:#0c1a12; --accent-soft:#27372d; --accent-text:#82d0a6;
-  --ok:#8acda5; --ok-soft:#29332b;
-  --warn:#dcb77a; --warn-soft:#333026; --danger:#e0a095; --danger-soft:#342d29; --neutral-soft:#2e312d;
-  --blue:#93b5e0; --blue-soft:#2a3033; --violet:#b8a9e0; --violet-soft:#2f2e33; --teal:#80c4c4; --teal-soft:#27322f;
-  --nuevo:#b4bab0;
-  --radius:14px; --shadow:0 8px 24px rgba(0,0,0,.45),0 0 0 1px #2e322c;
-  --font-sans:"Geist","Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
-  --font-mono:"Geist Mono",ui-monospace,"SF Mono",Menlo,monospace;
-  color-scheme:dark;
+  --bg:#F1F4F7; --surface:#FFFFFF; --surface-2:#E6ECF2; --text:#111A23; --muted:#33475B; --border:#CDD6E0;
+  --accent:#2F5D8C; --accent-ink:#FFFFFF; --accent-soft:#DCE7F3;
+  --ok:#1F6B4E; --ok-soft:#DDF1E8;
+  --warn:#7A5300; --warn-soft:#F8EBCF; --danger:#A3271B; --danger-soft:#F9E0DC; --neutral-soft:#E3E9EF;
+  --blue:#1F4F80; --blue-soft:#DCE7F3; --violet:#5B3FA0; --violet-soft:#ECE5FA;
+  --radius:12px; --shadow:0 10px 40px rgba(15,25,35,.18);
 }
-@media (prefers-color-scheme: light){
+@media (prefers-color-scheme: dark){
   :root{
-    --bg:#f5f6f2; --surface:#ffffff; --surface-2:#eff1eb; --surface-3:#e4e7df;
-    --text:#171a15; --muted:#565d52; --subtle:#646b5f; --border:#e1e4dc; --border-strong:#b9beb2;
-    --accent:#2a7650; --accent-hover:#235f41; --accent-ink:#ffffff; --accent-soft:#eaf1ee; --accent-text:#2a7650;
-    --ok:#2f7250; --ok-soft:#ecf2ef;
-    --warn:#7d5e22; --warn-soft:#f3f1eb; --danger:#9c4a3f; --danger-soft:#f6efee; --neutral-soft:#eff0ef;
-    --blue:#36609a; --blue-soft:#edf1f6; --violet:#64529e; --violet-soft:#f1eff6; --teal:#2b6a6b; --teal-soft:#ecf2f2;
-    --nuevo:#50574c;
-    --shadow:0 8px 24px rgba(23,26,21,.12),0 0 0 1px #e1e4dc;
-    color-scheme:light;
+    --bg:#0E151C; --surface:#18222D; --surface-2:#1F2A36; --text:#F4F7FA; --muted:#C8D6E5; --border:#2A3846;
+    --accent:#8DB8E6; --accent-ink:#0B1620; --accent-soft:#22344A;
+    --ok:#A8EBCF; --ok-soft:#1E3B33;
+    --warn:#F6D594; --warn-soft:#3F3320; --danger:#FFB4A6; --danger-soft:#45201C; --neutral-soft:#243140;
+    --blue:#D6E6F8; --blue-soft:#2A3F57; --violet:#DCCFFF; --violet-soft:#352C4F;
+    --shadow:0 10px 40px rgba(0,0,0,.55);
   }
 }
 *{box-sizing:border-box}
 html,body{margin:0}
-body{background:var(--bg);color:var(--text);font:15px/1.5 var(--font-sans);-webkit-font-smoothing:antialiased}
+body{background:var(--bg);color:var(--text);font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
 [hidden]{display:none !important}
 a{color:inherit}
-button,.btn{font:inherit;font-size:14px;font-weight:550;border-radius:10px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);padding:8px 14px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;text-decoration:none;white-space:nowrap}
+button,.btn{font:inherit;font-size:15px;border-radius:9px;border:1px solid var(--border);background:var(--surface);color:var(--text);padding:8px 14px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;text-decoration:none;white-space:nowrap}
 button:hover,.btn:hover{background:var(--surface-2)}
 button.primary,.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
-button.primary:hover,.btn.primary:hover{background:var(--accent-hover);border-color:var(--accent-hover)}
+button.primary:hover,.btn.primary:hover{filter:brightness(1.07)}
 button:disabled{opacity:.45;cursor:not-allowed}
 button.ghost{border-color:transparent;background:transparent;padding:6px 8px;color:var(--muted)}
 button.ghost:hover{background:var(--surface-2);color:var(--text)}
 button.danger{color:var(--danger);border-color:var(--danger-soft)}
 button.danger:hover{background:var(--danger-soft)}
-input,select,textarea{font:inherit;font-size:14px;color:var(--text);background:var(--surface-2);border:1px solid var(--border-strong);border-radius:10px;padding:8px 10px;min-width:0}
-::placeholder{color:var(--subtle);opacity:1}
+input,select,textarea{font:inherit;font-size:15px;color:var(--text);background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:8px 10px;min-width:0}
+::placeholder{color:var(--muted);opacity:.8}
 input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
 button:focus-visible,a:focus-visible,.chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 textarea{width:100%;resize:vertical}
@@ -75,10 +64,10 @@ svg{width:16px;height:16px;flex:none}
 /* Header */
 .top{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
 .top .wrap{display:flex;align-items:center;gap:16px;height:58px}
-.brand{font-weight:650;font-size:18px;letter-spacing:-.01em}
-.tabs{display:flex;gap:2px;background:var(--surface);border:1px solid var(--border);padding:4px;border-radius:14px}
-.tabs button{border:0;background:transparent;padding:6px 14px;border-radius:10px;color:var(--muted);font-weight:500}
-.tabs button.on{background:var(--surface-3);color:var(--text);box-shadow:none}
+.brand{font-weight:700;font-size:17px;letter-spacing:-.01em}
+.tabs{display:flex;gap:4px;background:var(--surface-2);padding:3px;border-radius:10px}
+.tabs button{border:0;background:transparent;padding:6px 14px;border-radius:8px;color:var(--muted);font-weight:500}
+.tabs button.on{background:var(--surface);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.08)}
 .user{font-size:14.5px;color:var(--muted)}
 @media (max-width:640px){.user-mail{display:none}.top .wrap{gap:10px}.brand{font-size:16px}}
 @media (max-width:440px){.brand{display:none}.tabs button{padding:6px 10px}.tab-long{display:none}.top .wrap{gap:6px}}
@@ -89,11 +78,11 @@ main{padding:20px 0 80px}
 .chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:12px;scrollbar-width:none}
 .chips::-webkit-scrollbar{display:none}
 .chip{border-radius:999px;padding:6px 12px;font-size:15px;border:1px solid var(--border);background:var(--surface);color:var(--text);flex:none}
-.chip b{font:500 12px var(--font-mono);margin-left:4px;color:var(--muted);font-variant-numeric:tabular-nums}
-.chip.on{background:var(--accent-soft);color:var(--text);border-color:var(--accent)}
-.chip.on b{color:var(--accent-text)}
-.chip.hot b{color:var(--accent-ink);background:var(--accent);border-radius:999px;padding:0 7px;min-width:20px;text-align:center;display:inline-block}
-.chip.on.hot b{color:var(--accent-ink)}
+.chip b{font-weight:600;margin-left:4px;color:var(--muted);font-variant-numeric:tabular-nums}
+.chip.on{background:var(--text);color:var(--bg);border-color:var(--text)}
+.chip.on b{color:inherit;opacity:.7}
+.chip.hot b{color:var(--danger)}
+.chip.on.hot b{color:inherit}
 
 .toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
 .toolbar input[type=search]{flex:1 1 220px;max-width:340px}
@@ -101,7 +90,7 @@ main{padding:20px 0 80px}
 /* Lists */
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
 table{width:100%;border-collapse:collapse}
-th{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--subtle);text-align:left;font-weight:600;padding:10px 14px;border-bottom:1px solid var(--border);background:var(--surface-2);white-space:nowrap}
+th{font-size:13.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);text-align:left;font-weight:600;padding:10px 14px;border-bottom:1px solid var(--border);background:var(--surface-2);white-space:nowrap}
 td{padding:11px 14px;border-bottom:1px solid var(--border);vertical-align:top}
 tr:last-child td{border-bottom:0}
 tbody.click tr{cursor:pointer}
@@ -110,7 +99,7 @@ tr.sel td{background:var(--accent-soft) !important}
 tr.sel td:first-child{box-shadow:inset 4px 0 0 var(--accent)}
 .name{font-weight:600}
 .meta{color:var(--muted);font-weight:450;font-size:14.5px;margin-top:1px}
-.num{font:450 14px var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.num{font:15px ui-monospace,SFMono-Regular,Menlo,monospace;font-variant-numeric:tabular-nums;white-space:nowrap}
 .phone{display:flex;align-items:center;gap:6px;white-space:nowrap}
 a.ic{display:inline-flex;color:var(--accent);padding:5px;border-radius:7px}
 a.ic svg{width:19px;height:19px}
@@ -120,21 +109,20 @@ a.weblink svg{width:15px;height:15px}
 a.ic:hover{background:var(--accent-soft)}
 .empty-state{padding:36px 16px;text-align:center;color:var(--muted)}
 .overdue{color:var(--danger);font-weight:600}
-.today{color:var(--accent-text);font-weight:600}
+.today{color:var(--warn);font-weight:600}
 
-.tag{font-size:12px;font-weight:550;border-radius:999px;padding:1px 8px;white-space:nowrap;display:inline-block}
+.tag{font-size:13px;font-weight:600;border-radius:999px;padding:1px 8px;white-space:nowrap;display:inline-block}
 .tag.wa{background:var(--ok-soft);color:var(--ok)}
 .tag.unk{background:var(--warn-soft);color:var(--warn)}
 .tag.fijo,.tag.intl,.tag.muted{background:var(--neutral-soft);color:var(--text)}
 .tag.reason{background:var(--danger-soft);color:var(--danger)}
-.st{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:550;border-radius:999px;padding:2px 10px 2px 8px;white-space:nowrap}
-.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
-.st-nuevo{background:var(--neutral-soft);color:var(--nuevo)}
+.st{font-size:14px;font-weight:600;border-radius:999px;padding:2px 10px;white-space:nowrap;display:inline-block}
+.st-nuevo{background:var(--neutral-soft);color:var(--text)}
 .st-contactado{background:var(--blue-soft);color:var(--blue)}
 .st-sin_respuesta{background:var(--warn-soft);color:var(--warn)}
-.st-interesado{background:var(--violet-soft);color:var(--violet)}
-.st-demo{background:var(--teal-soft);color:var(--teal)}
-.st-cliente{background:var(--ok-soft);color:var(--ok)}
+.st-interesado{background:var(--ok-soft);color:var(--ok)}
+.st-demo{background:var(--violet-soft);color:var(--violet)}
+.st-cliente{background:var(--ok);color:var(--surface)}
 .st-perdido{background:var(--danger-soft);color:var(--danger)}
 
 @media (max-width:760px){
@@ -145,43 +133,6 @@ a.ic:hover{background:var(--accent-soft)}
   table.resp td{border:0;padding:3px 14px}
   table.resp td.hide-m{display:none}
   table.resp td[data-l]::before{content:attr(data-l)" ";font-size:13.5px;color:var(--muted)}
-}
-
-/* Fila de lead (plantilla Prospectos) */
-.sub{color:var(--subtle)}
-td .name{font-size:15px;line-height:22px;font-weight:600}
-.addr{display:flex;align-items:center;gap:6px;font-size:13px;line-height:18px;color:var(--muted);margin-top:2px}
-.addr .street{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.zone{flex:none;font-size:11px;font-weight:550;line-height:16px;color:var(--muted);background:var(--surface-2);border:1px solid var(--border);padding:0 6px;border-radius:6px}
-td.lc{font-size:13px;color:var(--muted);white-space:nowrap}
-td.nx{min-width:0}
-.nx-what{font-size:13px;line-height:18px;color:var(--text)}
-.nx-what.px-suggest-txt{color:var(--subtle)}
-.nx-date{display:block;font-size:12px;font-weight:550;line-height:16px;color:var(--muted)}
-.nx-date.today{color:var(--accent-text)}
-.nx-date.overdue{color:var(--danger)}
-tr.lost td{opacity:.6}
-tbody.click tr:hover td{background:var(--surface-2)}
-.ic-l{display:none}
-a.ic{text-decoration:none}
-td{vertical-align:middle}
-@media (max-width:760px){
-  .card:has(table.resp){background:transparent;border:0;border-radius:0}
-  table.resp tbody{display:grid;gap:10px}
-  table.resp tr{background:var(--surface);border:1px solid var(--border) !important;border-radius:14px;padding:12px 2px !important}
-  table.resp tr.sel{border-color:var(--accent) !important}
-  table.resp td{padding:3px 14px !important}
-  table.resp td[data-l]{display:flex;flex-direction:column;gap:0}
-  table.resp td[data-l]::before{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--subtle)}
-  table.resp td.lc,table.resp td.nx{display:inline-flex;width:calc(50% - 4px);vertical-align:top}
-  table.resp td:nth-child(3){position:absolute;right:12px;top:12px;padding:0 !important}
-  table.resp tr{position:relative}
-  table.resp td:nth-child(1){padding-right:130px !important}
-  .phone{flex-wrap:wrap;gap:8px;margin:6px 0 4px}
-  .phone .num{width:100%}
-  .phone a.ic:not([title^="Sitio"]){flex:1;justify-content:center;gap:8px;height:40px;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-2);color:var(--text);font-size:14px;font-weight:550;align-items:center}
-  .phone a.ic .ic-l{display:inline}
-  td.lc{margin-top:6px}
 }
 
 /* Drawer */
@@ -203,7 +154,7 @@ td{vertical-align:middle}
 .quick{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
 .seg{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px}
 .seg button{padding:5px 10px;font-size:14.5px;border-radius:999px}
-.seg button.on{background:var(--accent-soft);color:var(--text);border-color:var(--accent)}
+.seg button.on{background:var(--text);color:var(--bg);border-color:var(--text)}
 .timeline{display:grid;gap:2px}
 .note{display:grid;grid-template-columns:28px 1fr auto;gap:8px;padding:10px 0;border-bottom:1px solid var(--border)}
 .note:last-child{border-bottom:0}
@@ -218,95 +169,8 @@ details.more>summary::-webkit-details-marker{display:none}
 details.more>summary::before{content:"› ";display:inline-block;transition:transform .15s}
 details.more[open]>summary::before{transform:rotate(90deg)}
 
-/* Panel lateral (plantilla Prospectos) */
-.drawer{background:var(--bg);border-left:1px solid var(--border)}
-.d-head{padding:18px 20px 12px;border-bottom:1px solid var(--border);background:var(--bg)}
-.d-head input{font-size:20px;font-weight:600;letter-spacing:-.01em}
-.d-body{padding:16px 20px 48px}
-.d-meta{margin-bottom:18px;display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;font-size:13px;color:var(--muted)}
-.d-meta a{color:var(--accent-text)}
-.d-sec{margin-top:24px}
-.d-sec h3{font-size:11px;letter-spacing:.06em;color:var(--subtle);margin:0 0 10px}
-.d-contact{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:2px 14px}
-.cr-act{display:flex;gap:8px;margin-left:auto}
-.d-contact .contact-row,.d-msg{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0;padding:12px 0;border-bottom:1px solid var(--border)}
-.d-contact > :last-child{border-bottom:0}
-.d-msg label{display:flex;align-items:center;gap:10px;margin:0;font-size:13px;color:var(--muted)}
-.d-msg select{max-width:240px}
-.d-msg details{flex-basis:100%}
-.d-msgbody{white-space:pre-wrap;font-size:13.5px;line-height:1.5;margin-top:8px;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:var(--surface-2);color:var(--text)}
-.contact-row .btn.sm{height:36px;padding:0 14px;font-size:14px}
-.grid2 label,.field{font-size:13px;font-weight:550;gap:6px}
-.grid2 input,.grid2 select{height:44px}
-.quick{margin-top:10px}
-.quick button{border-radius:999px;border-color:var(--border);background:transparent;color:var(--muted);padding:5px 12px}
-.quick button:hover{background:var(--surface-2);color:var(--text)}
-.seg button{border-color:var(--border);background:transparent;color:var(--muted);padding:6px 14px}
-.seg button:hover{background:var(--surface-2);color:var(--text)}
-.seg button.on{color:var(--text)}
-#dNote{background:var(--surface-2);border-color:var(--border-strong);border-radius:10px;padding:10px 12px}
-.note{grid-template-columns:28px 1fr auto;padding:12px 0}
-.note .k{width:28px;height:28px;background:var(--surface-2);color:var(--accent-text)}
-.note .k i{width:6px;height:6px;border-radius:50%;background:var(--subtle)}
-.note .k svg{width:14px;height:14px}
-.note .when{font-size:12px;font-weight:550;color:var(--muted);margin-bottom:2px}
-details.more>summary{color:var(--muted);font-size:13px;font-weight:550}
-details.more>summary:hover{color:var(--text)}
-button.danger{border-color:var(--border-strong)}
-button.danger:hover{border-color:var(--danger)}
-
-/* Ventana centrada (en vez de panel lateral) */
-.drawer{top:50%;left:50%;right:auto;bottom:auto;width:min(680px,calc(100% - 32px));max-height:calc(100vh - 48px);height:auto;border:1px solid var(--border-strong);border-radius:18px;overflow:hidden;transform:translate(-50%,-48%) scale(.97);opacity:0;pointer-events:none;transition:transform .18s ease,opacity .18s ease}
-.drawer.on{transform:translate(-50%,-50%);opacity:1;pointer-events:auto}
-.scrim{background:rgba(0,0,0,.55)}
-
-/* Ventana grande, en dos columnas */
-.drawer{width:min(1180px,calc(100% - 96px));height:auto;max-height:calc(100vh - 64px)}
-.d-cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:32px;align-items:start}
-.d-col{min-width:0}
-@media (max-width:900px){.drawer{width:calc(100% - 24px)}.d-cols{grid-template-columns:1fr;gap:0}}
-
-/* Buscar en Maps (plantilla Prospectos) */
-.mp-search{display:flex;gap:10px;margin-bottom:14px}
-.mp-input{position:relative;flex:1 1 auto;display:block}
-.mp-input svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);width:18px;height:18px;color:var(--subtle)}
-.mp-input input{width:100%;height:48px;padding-left:44px;font-size:15px}
-.mp-search button{height:48px;padding:0 24px}
-.mp-bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 24px;margin-bottom:16px;font-size:13px;color:var(--muted)}
-.mp-filter{display:flex;align-items:center;gap:8px}
-.mp-filter input{width:76px;height:34px;padding:0 8px;text-align:center;font:500 13px var(--font-mono)}
-.mp-quota{display:flex;align-items:center;gap:12px}
-.mp-quota b{color:var(--text);font:500 13px var(--font-mono)}
-.mp-quota .bar{width:120px;height:6px;border-radius:999px;background:var(--surface-3);overflow:hidden}
-.mp-quota .bar i{display:block;height:100%;background:var(--accent);border-radius:inherit}
-.mp-quota .bar i.hot{background:var(--danger)}
-#mapsHistBody strong{display:block;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--subtle)}
-.mp-note{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 14px;font-size:13px;color:var(--muted)}
-.mp-note.is-error{padding:10px 14px;border-radius:10px;background:var(--danger-soft);color:var(--danger)}
-.mp-empty{border:1px solid var(--border);border-radius:14px;background:var(--surface);padding:48px 24px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:12px}
-.mp-empty .t{margin:0;font-size:16px;font-weight:600}
-.mp-empty .s{margin:0;color:var(--muted);font-size:13px}
-.mp-empty .quick{justify-content:center;margin:4px 0 0}
-.mp-debug{font:12px var(--font-mono);word-break:break-all;color:var(--muted)}
-.mp-list{border:1px solid var(--border);border-radius:14px;background:var(--surface);overflow:hidden}
-.mp-head{display:flex;align-items:center;justify-content:space-between;gap:12px;height:44px;padding:0 16px;background:var(--surface-2);border-bottom:1px solid var(--border);font-size:13px;color:var(--muted)}
-.mp-head label{display:flex;align-items:center;gap:10px;cursor:pointer;color:var(--text);font-weight:550}
-.mp-count b{color:var(--text);font-family:var(--font-mono);font-weight:500}
-.mp-row{display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:14px;align-items:start;padding:14px 16px;border-bottom:1px solid var(--border);cursor:pointer}
-.mp-row:hover{background:var(--surface-2)}
-.mp-row.is-sel{background:var(--accent-soft);box-shadow:inset 2px 0 0 var(--accent)}
-.mp-row.is-off{cursor:default}
-.mp-row.is-off .mp-main{opacity:.82}
-.mp-row input[type=checkbox],.mp-head input[type=checkbox]{width:18px;height:18px;margin:2px 0 0;accent-color:var(--accent)}
-.mp-main{min-width:0}
-.mp-meta{display:flex;flex-wrap:wrap;gap:2px 12px;font-size:13px;line-height:18px;color:var(--muted);margin-top:2px}
-.mp-meta a{color:var(--accent-text)}
-.mp-contact{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin-top:6px}
-.mp-foot{display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--surface-2)}
-
-main.wrap{padding-top:24px}
 /* Import view */
-.drop{border:1.5px dashed var(--border-strong);border-radius:var(--radius);background:var(--surface);padding:24px 18px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s}
+.drop{border:2px dashed var(--border);border-radius:var(--radius);background:var(--surface);padding:24px 18px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s}
 .drop:hover,.drop.over{border-color:var(--accent);background:var(--accent-soft)}
 .drop strong{display:block;font-size:16px;margin-bottom:2px}
 .drop span{color:var(--muted);font-size:15px}
@@ -316,7 +180,7 @@ details.panel>summary::-webkit-details-marker{display:none}
 details.panel>summary::before{content:"›";display:inline-block;transition:transform .15s;color:var(--muted);font-size:18px;line-height:1}
 details.panel[open]>summary::before{transform:rotate(90deg)}
 .panel-body{padding:0 16px 16px}
-.panel-body textarea{font:14px/1.45 var(--font-mono);background:var(--bg)}
+.panel-body textarea{font:14.5px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--bg)}
 label.check{display:flex;gap:8px;align-items:center;font-size:15px;margin-top:10px}
 .settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
 @media (max-width:720px){.settings-grid{grid-template-columns:1fr}}
@@ -386,6 +250,17 @@ dialog label{display:grid;gap:4px;font-size:14.5px;color:var(--muted)}
     <div class="toolbar">
       <input type="search" id="pq" placeholder="Buscar nombre, teléfono, zona…">
       <select id="pZone" aria-label="Zona" style="max-width:220px"></select>
+      <select id="pEnc" aria-label="Encuesta" style="max-width:230px">
+        <option value="">Encuesta: todos</option>
+        <option value="si">Respondieron la encuesta</option>
+        <option value="no">No respondieron</option>
+        <option value="oport">Oportunidad: lo piden y no lo cuentan</option>
+        <option value="p2-1">Sin TACC: no ofrecen</option>
+        <option value="p2-2">Sin TACC: envasados</option>
+        <option value="p2-3">Sin TACC: cocina con cuidados</option>
+        <option value="p2-4">Sin TACC: cocina 100 % sin gluten</option>
+        <option value="p3-1">Sin lactosa: no ofrecen</option>
+      </select>
       <select id="pSort" aria-label="Ordenar">
         <option value="next">Ordenar: próxima acción</option>
         <option value="zone">Ordenar: zona</option>
@@ -413,14 +288,15 @@ dialog label{display:grid;gap:4px;font-size:14.5px;color:var(--muted)}
       <div class="row"><input id="mapsKeyInput" placeholder="AIza…" style="flex:1 1 280px;font-family:ui-monospace,monospace" autocomplete="off" spellcheck="false"><button class="primary" id="mapsKeySave">Guardar clave</button></div>
     </div>
     <div id="mapsMain" hidden>
-      <form class="mp-search" id="mapsForm">
-        <label class="mp-input"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="mapsQ" placeholder="cabañas Tandil" autocomplete="off" aria-label="Qué y dónde buscar"></label>
+      <form class="row" id="mapsForm" style="margin-bottom:6px">
+        <input id="mapsQ" placeholder="cabañas Tandil" style="flex:1 1 240px" autocomplete="off">
         <button class="primary" id="mapsGo" type="submit">Buscar</button>
       </form>
-      <div class="mp-bar">
-        <label class="mp-filter" title="Suelen ser hoteles grandes; vacío = no filtrar">Destildar con más de <input id="mapsMaxRev" type="number" min="0" step="50" placeholder="—"> reseñas</label>
-        <div class="mp-quota" id="mapsUsage" title="Cada página de 20 resultados cuenta como 1"></div>
+      <div class="row" style="margin:0 0 6px;font-size:15px;color:var(--muted)">
+        <label class="row" style="gap:6px">Destildar los que tengan más de <input id="mapsMaxRev" type="number" min="0" step="50" style="width:80px;padding:4px 8px"> reseñas</label>
+        <span class="hint" style="margin:0">(suelen ser hoteles grandes; vacío = no filtrar)</span>
       </div>
+      <p class="hint" id="mapsUsage" style="margin:0 0 10px"></p>
       <details class="panel" id="mapsHist" style="margin:0 0 14px"><summary>Destinos ya trabajados</summary><div class="panel-body" id="mapsHistBody"></div></details>
       <div id="mapsResults"></div>
     </div>
@@ -862,7 +738,7 @@ const ST = Object.fromEntries(STATUSES);
 const CLOSED = new Set(['cliente','perdido']);
 const KINDS = [['llamada','Llamada','📞'],['whatsapp','WhatsApp','💬'],['email','Email','✉️'],['visita','Visita','📍'],['nota','Nota','📝']];
 const KIND = Object.fromEntries(KINDS.map(k => [k[0], k]));
-const KIND_LABEL = {wa: 'WhatsApp', unk: 'A confirmar', fijo: 'Fijo', intl: 'Extranjero'};
+const KIND_LABEL = {wa: 'WhatsApp ✓', unk: 'A confirmar', fijo: 'Fijo', intl: 'Extranjero'};
 
 const ICON = {
   wa: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 21l2.1-5.5A8.4 8.4 0 1 1 21 11.5z"/></svg>',
@@ -879,7 +755,7 @@ const settings = {
   unconfirmed: load('unconfirmed', false),
   template: load('template', '')
 };
-const crm = {leads: [], filter: 'activos', q: '', zone: load('zone', ''), sort: load('sort', 'next'), openId: null, notes: {}, composeKind: 'llamada', loadedAt: 0};
+const crm = {leads: [], filter: 'activos', q: '', zone: load('zone', ''), enc: load('enc', ''), sort: load('sort', 'next'), openId: null, notes: {}, composeKind: 'llamada', loadedAt: 0};
 const PROVINCIAS = new Set(['buenos aires','caba','ciudad autonoma de buenos aires','catamarca','chaco','chubut','cordoba','corrientes','entre rios','formosa','jujuy','la pampa','la rioja','mendoza','misiones','neuquen','rio negro','salta','san juan','san luis','santa cruz','santa fe','santiago del estero','tierra del fuego','tucuman']);
 const zoneKey = l => { const z = zoneOf(l.location); return z ? fold(z) : '__none'; };
 function zoneOf(loc){
@@ -966,6 +842,43 @@ function zoneMatch(l, z){
   return i > 0 ? provKey(l) === z.slice(0, i) && zoneKey(l) === z.slice(i + 1) : zoneKey(l) === z;
 }
 
+/* ---------- Encuesta sin TACC / sin lactosa (columna encuesta de crm_leads) ---------- */
+// Se manda por WhatsApp (plantilla "Encuesta sin TACC"); la respuesta se pega en la ficha: "1-1, 2-2, 3-2, 4-3, 5-2".
+const ENC_Q = [
+  ['p1', 'Desayuno', ['Sí, incluido', 'Sí, con cargo', 'No, pero hay cocina', 'No']],
+  ['p2', 'Sin TACC', ['No ofrecen', 'Envasados', 'Cocina con cuidados', 'Cocina 100 % sin gluten']],
+  ['p3', 'Sin lactosa', ['No', 'A pedido', 'Siempre']],
+  ['p4', 'Se lo piden', ['Nunca', 'A veces', 'Seguido']],
+  ['p5', 'Lo cuentan', ['Sí', 'No']],
+];
+function parseEncuesta(text){
+  const s = String(text || '');
+  const out = {};
+  // pares "pregunta-respuesta": 1-1, 2)3, 3:2, "4 = 3"
+  for (const m of s.matchAll(/(?:^|[^\d])([1-5])\s*[-–—:.)=]\s*([1-4])(?!\d)/g)) out['p' + m[1]] = Number(m[2]);
+  if (!Object.keys(out).length){
+    // solo las respuestas en orden: "1 2 2 3 2" o "12232"
+    const d = (s.match(/[1-4]/g) || []);
+    if (d.length === 5) d.forEach((v, i) => { out['p' + (i + 1)] = Number(v); });
+  }
+  for (const [k, , opts] of ENC_Q) if (out[k] && out[k] > opts.length) delete out[k];
+  return Object.keys(out).length ? out : null;
+}
+const encAns = (l, k) => { const e = l.encuesta; const v = e && Number(e[k]); const q = ENC_Q.find(x => x[0] === k); return v && q ? q[2][v - 1] : ''; };
+const encOport = l => { const e = l.encuesta || {}; return Number(e.p4) >= 2 && Number(e.p5) === 2; };
+function encSummary(l){
+  if (!l.encuesta) return '';
+  return ENC_Q.map(([k, label]) => encAns(l, k) ? `${label}: ${encAns(l, k)}` : '').filter(Boolean).join(' · ');
+}
+function encMatch(l, f){
+  if (!f) return true;
+  if (f === 'si') return !!l.encuesta;
+  if (f === 'no') return !l.encuesta;
+  if (f === 'oport') return !!l.encuesta && encOport(l);
+  const m = /^(p\d)-(\d)$/.exec(f);
+  return !!(m && l.encuesta && Number(l.encuesta[m[1]]) === Number(m[2]));
+}
+
 let entries = [];      // import buffer (used by the filter engine)
 let truncated = false;
 
@@ -1030,12 +943,34 @@ Web, motor de reservas, check-in: con 4 o 5 cabañas pasa fácil los USD 200 por
 Loomi Suite hace todo eso desde USD 25. loomisuite.net
 
 María · Loomi Suite`;
+const TPL_ENCUESTA = `Relevamiento: alojamientos aptos para celíacos e intolerantes a la lactosa en Argentina.
+Son 5 preguntas y se contestan con números. Al final les mando de regalo un manual con todo lo que conviene saber.
+
+1. ¿Ofrecen desayuno?
+1) Sí, incluido · 2) Sí, con cargo · 3) No, pero hay cocina equipada · 4) No
+
+2. ¿Ofrecen opciones sin TACC?
+1) No · 2) Productos envasados · 3) Los preparamos en la cocina, con cuidados · 4) Cocina 100 % sin gluten
+
+3. ¿Y sin lactosa?
+1) No · 2) A pedido · 3) Siempre
+
+4. ¿Les piden opciones sin TACC o sin lactosa?
+1) Nunca · 2) A veces · 3) Seguido
+
+5. ¿Lo cuentan en su web o en sus avisos?
+1) Sí · 2) No
+
+Pueden contestar así: 1-1, 2-2, 3-2, 4-3, 5-2
+
+María · Loomi Suite`;
 function templates(){
   const t = crm.meta && crm.meta.wa_templates;
   if (t && Array.isArray(t.items)) return t.items;
   const out = [], legacy = (settings.template || '').trim();
   if (legacy) out.push({id: 't-inicial', name: 'Primer contacto', body: legacy});
   out.push({id: 't-caros', name: 'Usan sistemas caros', body: TPL_CAROS});
+  out.push({id: 't-encuesta', name: 'Encuesta sin TACC', body: TPL_ENCUESTA});
   return out;
 }
 let tplSel = load('tplSel', '');
@@ -1190,6 +1125,7 @@ function filterLeads(){
   const t = todayISO(), q = fold(crm.q).trim(), qd = digitsOf(crm.q);
   return crm.leads.filter(l => {
     if (!zoneMatch(l, crm.zone)) return false;
+    if (!encMatch(l, crm.enc)) return false;
     if (crm.filter === 'hoy'){ if (!l.next_action_at || l.next_action_at > t || CLOSED.has(l.status)) return false; }
     else if (crm.filter === 'activos'){ if (CLOSED.has(l.status)) return false; }
     else if (crm.filter !== 'todos' && l.status !== crm.filter) return false;
@@ -1223,11 +1159,11 @@ function renderChips(){
 }
 function phoneMini(l){
   const ps = l.phones || [];
-  if (!ps.length) return l.web ? `<div class="phone"><span class="sub">Sin teléfono</span><a class="ic" href="${esc(webHref(l.web))}" target="_blank" rel="noopener" title="Sitio web" data-stop>${ICON.globe}</a></div>` : '<span class="sub">Sin teléfono</span>';
+  if (!ps.length) return l.web ? `<div class="phone"><span class="muted">Sin teléfono</span><a class="ic" href="${esc(webHref(l.web))}" target="_blank" rel="noopener" title="Sitio web" data-stop>${ICON.globe}</a></div>` : '<span class="muted">—</span>';
   const p = ps[0];
   return `<div class="phone"><span class="num">${esc(p.n)}</span>` +
-    (p.k !== 'fijo' ? `<a class="ic" href="${esc(waLink(p, l))}" target="_blank" rel="noopener" title="WhatsApp" aria-label="WhatsApp" data-stop>${ICON.wa}<span class="ic-l">WhatsApp</span></a>` : '') +
-    `<a class="ic" href="tel:${esc(p.n)}" title="Llamar" aria-label="Llamar" data-stop>${ICON.tel}<span class="ic-l">Llamar</span></a>` +
+    (p.k !== 'fijo' ? `<a class="ic" href="${esc(waLink(p, l))}" target="_blank" rel="noopener" title="WhatsApp" data-stop>${ICON.wa}</a>` : '') +
+    `<a class="ic" href="tel:${esc(p.n)}" title="Llamar" data-stop>${ICON.tel}</a>` +
     (ps.length > 1 ? `<span class="tag muted">+${ps.length - 1}</span>` : '') +
     (l.web ? `<a class="ic" href="${esc(webHref(l.web))}" target="_blank" rel="noopener" title="Sitio web: ${esc(webLabel(l.web))}" data-stop>${ICON.globe}</a>` : '') + `</div>`;
 }
@@ -1259,11 +1195,7 @@ function renderZones(){
   $('#pZone').innerHTML = html;
   $('#pZone').hidden = provs.size < 2 && plist.every(([, P]) => P.zones.size < 2);
   $('#pSort').value = crm.sort;
-}
-function streetOf(loc, zone){
-  // dirección sin la localidad ni la provincia (esas ya se ven como etiqueta)
-  const z = fold(zone || '');
-  return String(loc || '').split(/[,;]/).map(x => x.trim()).filter(x => x && fold(x) !== z && !PROVINCIAS.has(fold(x)) && !/^[A-Z]?\d{4}[A-Z]{0,3}$/.test(x) && !/^AR$/i.test(x)).join(', ');
+  $('#pEnc').value = crm.enc;
 }
 function renderPipe(){
   if ($('#vApp').hidden) return;
@@ -1272,20 +1204,15 @@ function renderPipe(){
   const list = filterLeads();
   const empty = !crm.leads.length
     ? 'Todavía no hay leads. Andá a <b>Importar</b> para cargar un CSV, o creá uno con <b>+ Nuevo lead</b>.'
-    : crm.filter === 'hoy' ? 'Nada pendiente para hoy.' : 'No hay leads en esta vista.';
+    : crm.filter === 'hoy' ? 'No hay nada pendiente para hoy. 🎉' : 'No hay leads en esta vista.';
   $('#tbPipe').innerHTML = list.length ? list.map(l => {
     const dc = dueClass(l.next_action_at, l.status);
-    const zone = zoneOf(l.location), street = streetOf(l.location, zone);
-    const closed = CLOSED.has(l.status);
-    const nxtWhat = l.next_action ? esc(l.next_action) : (!closed && !l.next_action_at ? 'Primer mensaje' : '');
-    const nxtCls = l.next_action ? '' : ' px-suggest-txt';
-    const nxtDate = l.next_action_at ? `<span class="nx-date ${dc}">${dc === 'overdue' ? 'Vencida · ' : ''}${esc(fmtDay(l.next_action_at))}</span>` : '';
-    return `<tr data-id="${l.id}" class="${crm.openId === l.id ? 'sel' : ''} ${l.status === 'perdido' ? 'lost' : ''}">
-      <td><div class="name">${esc(l.name)}</div>${(zone || street) ? `<div class="meta addr">${zone ? `<span class="zone">${esc(zone)}</span>` : ''}${street ? `<span class="street">${esc(street)}</span>` : ''}</div>` : ''}</td>
+    return `<tr data-id="${l.id}" class="${crm.openId === l.id ? 'sel' : ''}">
+      <td><div class="name">${esc(l.name)}${l.encuesta ? ` <span class="tag ${encOport(l) ? 'wa' : 'muted'}" title="${esc(encSummary(l))}">${encOport(l) ? 'Oportunidad' : 'Encuesta'}</span>` : ''}</div>${l.location ? `<div class="meta">${esc(l.location)}</div>` : ''}</td>
       <td>${phoneMini(l)}</td>
       <td><span class="st st-${l.status}">${ST[l.status] || l.status}</span></td>
-      <td data-l="Último contacto" class="lc">${l.last_contact_at ? esc(relTime(l.last_contact_at)) : '<span class="sub">Sin contactar</span>'}</td>
-      <td data-l="Próxima acción" class="nx"><div class="nx-what${nxtCls}">${nxtWhat}</div>${nxtDate}</td>
+      <td class="${l.last_contact_at ? '' : 'hide-m'}" data-l="Último contacto:">${l.last_contact_at ? esc(relTime(l.last_contact_at)) : '<span class="muted">—</span>'}</td>
+      <td class="${l.next_action_at || l.next_action ? '' : 'hide-m'}" data-l="Próxima:">${l.next_action_at ? `<span class="${dc}">${esc(fmtDay(l.next_action_at))}</span> ` : ''}${l.next_action ? `<span class="muted">${esc(l.next_action)}</span>` : (l.next_action_at ? '' : '<span class="muted">—</span>')}</td>
     </tr>`;
   }).join('') : `<tr><td colspan="5" class="empty-state">${empty}</td></tr>`;
   $('#pipeHint').textContent = list.length ? `${list.length} lead${list.length === 1 ? '' : 's'} en esta vista.` : '';
@@ -1294,6 +1221,7 @@ $('#chips').addEventListener('click', e => { const b = e.target.closest('[data-f
 $('#pq').addEventListener('input', e => { crm.q = e.target.value; renderPipe(); });
 $('#pZone').addEventListener('change', e => { crm.zone = e.target.value; store('zone', crm.zone); renderPipe(); });
 $('#pSort').addEventListener('change', e => { crm.sort = e.target.value; store('sort', crm.sort); renderPipe(); });
+$('#pEnc').addEventListener('change', e => { crm.enc = e.target.value; store('enc', crm.enc); renderPipe(); });
 $('#tbPipe').addEventListener('click', e => {
   if (e.target.closest('[data-stop]')) return;
   const tr = e.target.closest('tr[data-id]'); if (tr) openDrawer(tr.dataset.id);
@@ -1330,31 +1258,29 @@ function renderDrawer(){
   const src = l.source_url ? `<a href="${esc(l.source_url)}" target="_blank" rel="noopener">${/google\./.test(l.source_url) ? 'ver en Maps' : 'ver post'}</a>` : '';
   const ig = l.instagram ? `<a href="${esc(l.instagram)}" target="_blank" rel="noopener">@${esc((l.instagram.match(/instagram\.com\/([\w.]+)/i) || [, l.instagram])[1])}</a>` : '';
   const pv = provOf(l);
-  const zone = zoneOf(l.location), street = streetOf(l.location, zone);
-  const meta = [zone ? `<span class="zone">${esc(zone)}</span>` : '', street ? `<span>${esc(street)}</span>` : '', pv ? `<span>${esc(pv)}</span>` : '', ig, src].filter(Boolean).join('');
+  const meta = [l.location ? esc(l.location) : '', pv && !fold(l.location || '').includes(fold(pv)) ? esc(pv) : '', ig, src].filter(Boolean).join(' · ');
   const webHref = l.web ? (/^https?:/.test(l.web) ? l.web : 'https://' + l.web) : '';
 
-  $('#dBody').innerHTML = `<div class="d-cols"><div class="d-col">
-    <div class="d-meta"><span class="st st-${l.status}">${ST[l.status] || l.status}</span>${meta}</div>
+  $('#dBody').innerHTML = `
+    ${meta ? `<div class="meta" style="margin-top:-2px">${meta}</div>` : ''}
 
-    <div class="d-sec d-contact">
-      ${(l.phones || []).some(p => p.k !== 'fijo') ? (() => { const ct = curTemplate(); return `<div class="d-msg">
-        <label>Mensaje
+    <div class="d-sec">
+      ${(l.phones || []).some(p => p.k !== 'fijo') ? (() => { const ct = curTemplate(); return `<div class="row" style="gap:8px;margin-bottom:8px;flex-wrap:wrap">
+        <label style="display:flex;align-items:center;gap:8px;margin:0;font-size:15px">Mensaje
           <select id="dTpl" style="max-width:240px">${templates().map(t => `<option value="${esc(t.id)}" ${ct && ct.id === t.id ? 'selected' : ''}>${esc(t.name || 'Sin nombre')}</option>`).join('')}<option value="none" ${!ct ? 'selected' : ''}>Sin texto</option></select>
         </label>
-        ${ct ? `<details class="more"><summary>Ver el mensaje</summary><div class="d-msgbody">${esc(fillTpl(ct.body, l))}</div></details>` : ''}
+        ${ct ? `<details style="flex-basis:100%"><summary style="cursor:pointer;font-size:14.5px">Ver el mensaje</summary><div style="white-space:pre-wrap;font-size:14.5px;line-height:1.45;margin-top:6px;padding:10px 12px;border:1px solid var(--border);border-radius:10px">${esc(fillTpl(ct.body, l))}</div></details>` : ''}
       </div>`; })() : ''}
       ${(l.phones || []).map(p => `
         <div class="contact-row">
           <span class="num">${esc(p.n)}</span><span class="tag ${p.k}">${KIND_LABEL[p.k] || ''}</span>
-          <span class="cr-act">
+          <span class="spacer"></span>
           ${p.k !== 'fijo' ? `<a class="btn sm primary" href="${esc(waLink(p, l))}" target="_blank" rel="noopener" data-act="openwa">${ICON.wa} WhatsApp</a>` : ''}
           <a class="btn sm" href="tel:${esc(p.n)}" data-act="opencall">${ICON.tel} Llamar</a>
-          </span>
-        </div>`).join('') || '<p class="sub" style="margin:0">Sin teléfono cargado.</p>'}
-      ${(l.web || l.email) ? `<div class="contact-row">
+        </div>`).join('') || '<p class="muted" style="margin:0">Sin teléfono cargado.</p>'}
+      ${(l.web || l.email) ? `<div class="contact-row" style="margin-top:8px">
         ${l.web ? `<a class="btn sm" href="${esc(webHref)}" target="_blank" rel="noopener">${ICON.ext} ${esc(l.web.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, ''))}</a>` : ''}
-        ${l.email ? `<a class="btn sm" href="mailto:${esc(l.email)}">${esc(l.email)}</a>` : ''}
+        ${l.email ? `<a class="btn sm" href="mailto:${esc(l.email)}">✉️ ${esc(l.email)}</a>` : ''}
       </div>` : ''}
     </div>
 
@@ -1377,10 +1303,19 @@ function renderDrawer(){
       ${l.next_action_at || l.next_action ? '<button class="sm ghost" data-next="clear">Quitar</button>' : ''}
     </div>
 
-    </div><div class="d-col">
-    <div class="d-sec" style="margin-top:0">
+    <div class="d-sec">
+      <h3>Encuesta sin TACC y sin lactosa</h3>
+      ${l.encuesta ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">${ENC_Q.map(([k, label]) => encAns(l, k) ? `<span class="tag muted">${esc(label)}: ${esc(encAns(l, k))}</span>` : '').join('')}${encOport(l) ? '<span class="tag wa">Oportunidad: lo piden y no lo cuentan</span>' : ''}</div>` : ''}
+      <div class="row" style="gap:8px">
+        <input id="dEnc" placeholder="${l.encuesta ? 'Pegar otra respuesta para corregir' : 'Pegá la respuesta: 1-1, 2-2, 3-2, 4-3, 5-2'}" style="flex:1;min-width:0">
+        <button class="sm primary" id="dEncSave">Guardar</button>
+        ${l.encuesta ? '<button class="sm ghost" id="dEncDel">Borrar</button>' : ''}
+      </div>
+    </div>
+
+    <div class="d-sec">
       <h3>Registrar contacto</h3>
-      <div class="seg" id="dKinds">${KINDS.map(([k, label, ic]) => `<button type="button" data-kind="${k}" class="${crm.composeKind === k ? 'on' : ''}">${label}</button>`).join('')}</div>
+      <div class="seg" id="dKinds">${KINDS.map(([k, label, ic]) => `<button type="button" data-kind="${k}" class="${crm.composeKind === k ? 'on' : ''}">${ic} ${label}</button>`).join('')}</div>
       <textarea id="dNote" rows="3" placeholder="Qué hablaron, cuántas unidades tiene, qué sistema usa, objeciones…"></textarea>
       <div class="row" style="margin-top:8px">
         <button class="primary sm" id="dSaveNote">Guardar</button>
@@ -1388,7 +1323,7 @@ function renderDrawer(){
         <button class="sm" data-quick="noatendio">No atendió</button>
         <button class="sm" data-quick="wasent">Le escribí por WhatsApp</button>
       </div>
-      <p class="hint">Ctrl + Enter guarda</p>
+      <p class="hint">Ctrl + Enter guarda. Registrar un contacto pasa a “Contactado” los leads nuevos.</p>
     </div>
 
     <div class="d-sec">
@@ -1396,10 +1331,10 @@ function renderDrawer(){
       <div class="timeline">
         ${notes == null ? '<p class="muted">Cargando…</p>' : notes.length ? notes.map(n => `
           <div class="note">
-            <div class="k" title="${esc((KIND[n.kind] || [])[1] || '')}">${n.kind === 'llamada' ? ICON.tel : n.kind === 'whatsapp' ? ICON.wa : '<i></i>'}</div>
+            <div class="k" title="${esc((KIND[n.kind] || [])[1] || '')}">${(KIND[n.kind] || [, , '📝'])[2]}</div>
             <div><div class="when">${esc((KIND[n.kind] || [, 'Nota'])[1])} · ${esc(fmtStamp(n.created_at))}</div>${n.body ? `<div class="body">${esc(n.body)}</div>` : ''}</div>
             <button class="ghost sm" data-delnote="${n.id}" title="Borrar nota">${ICON.x}</button>
-          </div>`).join('') : '<p class="sub" style="margin:0">Sin registros todavía.</p>'}
+          </div>`).join('') : '<p class="muted" style="margin:0">Todavía no hay registros.</p>'}
       </div>
     </div>
 
@@ -1422,16 +1357,17 @@ function renderDrawer(){
           <button class="danger sm" id="dDelete">Eliminar lead</button>
         </div>
       </details>
-    </div>
-    </div></div>`;
+    </div>`;
 }
 
 $('#dName').addEventListener('change', e => { const v = e.target.value.trim(); const l = curLead(); if (l && v && v !== l.name) updateLead(l.id, {name: v}); });
 $('#dName').addEventListener('keydown', e => { if (e.key === 'Enter') e.target.blur(); });
 
+$('#dBody').addEventListener('keydown', e => { if (e.target.id === 'dEnc' && e.key === 'Enter'){ e.preventDefault(); $('#dEncSave').click(); } });
 $('#dBody').addEventListener('change', e => {
   const l = curLead(); if (!l) return;
   const t = e.target;
+  if (t.id === 'dEnc') return;
   if (t.id === 'dTpl'){ tplSel = t.value; store('tplSel', tplSel); renderDrawer(); renderPipe(); return; }
   if (t.id === 'dStatus') return updateLead(l.id, {status: t.value}).then(() => toast('Estado: ' + ST[t.value]));
   if (t.id === 'dNextDate') return updateLead(l.id, {next_action_at: t.value || null}).then(renderDrawer);
@@ -1475,6 +1411,22 @@ $('#dBody').addEventListener('click', async e => {
     if (error) return toast('No se pudo borrar');
     crm.notes[l.id] = (crm.notes[l.id] || []).filter(n => n.id !== b.dataset.delnote);
     renderDrawer(); return;
+  }
+  if (b.id === 'dEncSave'){
+    const raw = $('#dEnc').value.trim();
+    const enc = parseEncuesta(raw);
+    if (!enc){ toast('No entendí la respuesta. Ejemplo: 1-1, 2-2, 3-2, 4-3, 5-2'); return; }
+    const value = {...enc, raw, at: new Date().toISOString()};
+    if (await updateLead(l.id, {encuesta: value})){
+      toast('Encuesta guardada' + (encOport({encuesta: value}) ? ' · Oportunidad' : ''));
+      renderDrawer(); renderPipe();
+    }
+    return;
+  }
+  if (b.id === 'dEncDel'){
+    if (!confirm('¿Borrar la respuesta de la encuesta?')) return;
+    if (await updateLead(l.id, {encuesta: null})){ renderDrawer(); renderPipe(); }
+    return;
   }
   if (b.id === 'dProvAll'){
     const zk = zoneKey(l), pk = provKey(l), pv2 = provOf(l);
@@ -1553,8 +1505,8 @@ async function exportCRM(){
   if (error) return toast('No se pudieron leer las notas');
   const byLead = {};
   for (const n of notes || []) (byLead[n.lead_id] ||= []).push(`${isoLocal(new Date(n.created_at))} ${(KIND[n.kind] || [, n.kind])[1]}: ${n.body}`);
-  const head = ['Nombre del complejo','Teléfono/WhatsApp','Página Web','Email','Instagram','Zona','Provincia','Estado','Último contacto','Próxima acción (fecha)','Próxima acción','Notas'];
-  const rows = filterLeads().map(l => [l.name, phonesToText(l.phones), l.web || '', l.email || '', l.instagram || '', l.location || '', provOf(l), ST[l.status] || l.status,
+  const head = ['Nombre del complejo','Teléfono/WhatsApp','Página Web','Email','Instagram','Zona','Provincia','Encuesta','Estado','Último contacto','Próxima acción (fecha)','Próxima acción','Notas'];
+  const rows = filterLeads().map(l => [l.name, phonesToText(l.phones), l.web || '', l.email || '', l.instagram || '', l.location || '', provOf(l), encSummary(l), ST[l.status] || l.status,
     l.last_contact_at ? isoLocal(new Date(l.last_contact_at)) : '', l.next_action_at || '', l.next_action || '', (byLead[l.id] || []).join(' | ')]);
   const csv = [head, ...rows].map(r => r.map(c => { c = String(c ?? ''); return /[";\n]/.test(c) ? '"' + c.replace(/"/g, '""') + '"' : c; }).join(';')).join('\r\n');
   const a = document.createElement('a');
@@ -1898,9 +1850,9 @@ function renderMapsHistory(){
   const zl = [...zones.entries()].sort((a, b) => (!a[1][2] - !b[1][2]) || a[1][2].localeCompare(b[1][2], 'es') || a[1][0].localeCompare(b[1][0], 'es'));
   $('#mapsHist').querySelector('summary').textContent = `Destinos ya trabajados (${zl.length} zonas en tu CRM${saved.length ? ` · ${saved.length} búsquedas guardadas` : ''})`;
   $('#mapsHistBody').innerHTML = `
-    <strong>Zonas que ya tenés en el CRM</strong>
+    <strong style="font-size:14.5px">Zonas que ya tenés en el CRM</strong>
     <div class="quick" style="margin:6px 0 14px">${zl.length ? zl.map(([k, [z, n, pv]]) => `<button class="sm" data-zone="${esc(k)}" title="Ver estos leads en el Pipeline">${esc(z)}${pv ? ` <span class="muted">· ${esc(pv)}</span>` : ''} <span class="muted">${n}</span></button>`).join('') : '<span class="muted" style="font-size:14.5px">Todavía no hay.</span>'}</div>
-    <strong>Búsquedas guardadas</strong>
+    <strong style="font-size:14.5px">Búsquedas guardadas</strong>
     ${!maps.savedLoaded ? '<p class="hint" style="margin:4px 0 0">Cargando…</p>' : saved.length ? `<div style="margin-top:6px;display:grid;gap:2px">${saved.map(s => {
         const res = s.results || []; const ss = new Set(s.k === keyOf(maps.origQ || '') ? [...maps.sel] : (s.sel || [])); const pend = res.filter(c => ss.has(c.id) && candState(c, idx) === 'new').length; const h = hist.find(x => x.k === s.k);
         return `<div class="row" style="font-size:15px;padding:7px 0;border-bottom:1px solid var(--border);gap:10px">
@@ -1923,20 +1875,19 @@ function renderMaps(){
   if (!hasKey) return;
   if (document.activeElement !== $('#mapsMaxRev')) $('#mapsMaxRev').value = maxRev() || '';
   const used = mapsUsed(), limit = mapsLimit();
-  const pct = Math.min(100, Math.round(used / Math.max(1, limit) * 100));
-  $('#mapsUsage').innerHTML = `<span>Este mes <b>${used}</b> de ${limit} búsquedas</span><span class="bar"><i class="${used >= limit * 0.9 ? 'hot' : ''}" style="width:${pct}%"></i></span>`;
+  $('#mapsUsage').innerHTML = `Este mes usaste <b>${used}</b> de ${limit} búsquedas gratis` + (used >= limit * 0.9 ? ' · <span class="overdue">casi en el límite</span>' : '') + '. Cada página de 20 resultados cuenta como 1.';
   renderMapsHistory();
   $('#mapsGo').disabled = maps.loading;
   $('#mapsGo').textContent = maps.loading && !maps.results.length ? 'Buscando…' : 'Buscar';
   const box = $('#mapsResults');
-  const err = (maps.error ? `<div class="mp-note is-error">${esc(maps.error)}</div>` : '')
-    + (maps.note && !maps.error ? `<p class="mp-note">${esc(maps.note)}</p>` : '')
-    + (maps.openedSaved && maps.results.length && !maps.loading ? `<div class="mp-note"><span>Búsqueda guardada · última vez ${esc(fmtStamp(maps.openedSaved))}. No gastó búsquedas.</span><button class="sm" id="mapsRefresh">Actualizar desde Google (gasta 1)</button></div>` : '')
-    + (maps.restored && maps.results.length && !maps.loading ? `<p class="mp-note">Es tu última búsqueda, con lo que tenías tildado. No gastó búsquedas nuevas.</p>` : '');
+  const err = (maps.error ? `<div class="banner" style="background:var(--danger-soft);color:var(--danger);margin:0 0 12px">${esc(maps.error)}</div>` : '')
+    + (maps.note && !maps.error ? `<p class="hint" style="margin:0 0 10px">ℹ️ ${esc(maps.note)}</p>` : '')
+    + (maps.openedSaved && maps.results.length && !maps.loading ? `<div class="row" style="margin:0 0 10px;gap:10px"><span class="hint" style="margin:0">📁 Búsqueda guardada · última vez ${esc(fmtStamp(maps.openedSaved))}. No gastó búsquedas.</span><button class="sm" id="mapsRefresh">Actualizar desde Google (gasta 1)</button></div>` : '')
+    + (maps.restored && maps.results.length && !maps.loading ? `<p class="hint" style="margin:0 0 10px">↺ Esta es tu última búsqueda, con lo que tenías tildado. No gastó ninguna búsqueda nueva.</p>` : '');
   if (!maps.results.length){
-    box.innerHTML = err + (maps.loading ? '<div class="mp-empty"><p class="t">Buscando en Google Maps…</p></div>'
-      : maps.q ? `<div class="mp-empty"><p class="t">Sin resultados para “${esc(maps.q)}”</p><p class="s">Probá con otra zona o palabra.</p>${maps.debug != null ? `<div class="mp-debug">Respuesta de Google: ${esc(maps.debug || '(vacía)')}</div>` : ''}</div>`
-      : `<div class="mp-empty"><p class="t">Escribí qué y dónde buscar</p><div class="quick">${['cabañas Tandil', 'complejos Villa Gesell', 'cabañas Mina Clavero', 'apart San Martín de los Andes'].map(s => `<button class="sm" data-mq="${esc(s)}">${esc(s)}</button>`).join('')}</div></div>`);
+    box.innerHTML = err + (maps.loading ? '<div class="empty-state">Buscando en Google Maps…</div>'
+      : maps.q ? `<div class="card empty-state">No hubo resultados para “${esc(maps.q)}”. Probá con otra zona o palabra.${maps.debug != null ? `<div style="margin-top:10px;font:13.5px ui-monospace,monospace;word-break:break-all;opacity:.8">Respuesta de Google: ${esc(maps.debug || '(vacía)')}</div>` : ''}</div>`
+      : `<div class="card empty-state">Escribí qué y dónde buscar.<div class="quick" style="justify-content:center;margin-top:12px">${['cabañas Tandil', 'complejos Villa Gesell', 'cabañas Mina Clavero', 'apart San Martín de los Andes'].map(s => `<button class="sm" data-mq="${esc(s)}">${esc(s)}</button>`).join('')}</div></div>`);
     return;
   }
   const idx = mapsIndex();
@@ -1946,30 +1897,29 @@ function renderMaps(){
   const nSel = maps.sel.size;
   const allNew = states.filter(([, s]) => s === 'new');
   const allOn = allNew.length && allNew.every(([c]) => maps.sel.has(c.id));
-  const ST_CLS = {muted: 'st-nuevo', reason: 'st-perdido', unk: 'st-sin_respuesta', wa: 'st-cliente'};
   box.innerHTML = err + `
-    <div class="mp-list">
-      <div class="mp-head">
-        <label><input type="checkbox" id="mapsAll" ${allOn ? 'checked' : ''}> Seleccionar los nuevos con teléfono</label>
-        <span class="mp-count">${maps.results.length} resultados · <b>${nSel}</b> seleccionados</span>
+    <div class="card">
+      <div class="row" style="padding:10px 14px;border-bottom:1px solid var(--border);font-size:15px">
+        <label class="row" style="gap:8px;cursor:pointer"><input type="checkbox" id="mapsAll" ${allOn ? 'checked' : ''}> Seleccionar los nuevos con teléfono</label>
+        <span class="spacer"></span><span class="muted">${maps.results.length} resultados · ${nSel} seleccionados</span>
       </div>
       ${states.map(([c, s]) => `
-        <label class="mp-row ${s === 'new' ? '' : 'is-off'} ${maps.sel.has(c.id) ? 'is-sel' : ''}">
-          <input type="checkbox" data-pid="${esc(c.id)}" ${maps.sel.has(c.id) ? 'checked' : ''} ${s === 'crm' ? 'disabled' : ''}>
-          <div class="mp-main">
+        <label style="display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:10px;padding:11px 14px;border-bottom:1px solid var(--border);cursor:${s === 'crm' ? 'default' : 'pointer'};${s === 'new' ? '' : 'opacity:.75'}">
+          <input type="checkbox" data-pid="${esc(c.id)}" ${maps.sel.has(c.id) ? 'checked' : ''} ${s === 'crm' ? 'disabled' : ''} style="margin-top:3px">
+          <div style="min-width:0">
             <div class="name">${esc(c.name)}</div>
-            <div class="mp-meta">${[c.location ? esc(c.location) : '', c.rating ? `★ ${String(c.rating).replace('.', ',')} (${c.reviews || 0})` : '', c.type ? esc(c.type) : '', c.maps ? `<a href="${esc(c.maps)}" target="_blank" rel="noopener">ver en Maps</a>` : ''].filter(Boolean).map(x => `<span>${x}</span>`).join('')}</div>
-            ${c.phones.length || c.web ? `<div class="mp-contact">${c.phones.map(p => `<span class="num">${esc(p.n)}</span><span class="tag ${p.k}">${KIND_LABEL[p.k]}</span>`).join('')}${c.web ? `<a class="weblink" href="${esc(webHref(c.web))}" target="_blank" rel="noopener" title="Abrir sitio web">${ICON.ext}${esc(webLabel(c.web))}</a>` : ''}</div>` : ''}
+            <div class="meta">${[c.location ? esc(c.location) : '', c.rating ? `★ ${String(c.rating).replace('.', ',')} (${c.reviews || 0})` : '', c.type ? esc(c.type) : '', c.maps ? `<a href="${esc(c.maps)}" target="_blank" rel="noopener">ver en Maps</a>` : ''].filter(Boolean).join(' · ')}</div>
+            ${c.phones.length || c.web ? `<div class="row" style="gap:8px;margin-top:3px">${c.phones.map(p => `<span class="num">${esc(p.n)}</span><span class="tag ${p.k}">${KIND_LABEL[p.k]}</span>`).join('')}${c.web ? `<a class="weblink" href="${esc(webHref(c.web))}" target="_blank" rel="noopener" title="Abrir sitio web">${ICON.ext}${esc(webLabel(c.web))}</a>` : ''}</div>` : ''}
           </div>
-          <span class="st ${ST_CLS[MAPS_STATE[s][1]] || 'st-nuevo'}">${MAPS_STATE[s][0]}</span>
+          <span class="tag ${MAPS_STATE[s][1]}" style="align-self:start">${MAPS_STATE[s][0]}</span>
         </label>`).join('')}
-      <div class="mp-foot">
-        ${maps.next ? `<button id="mapsMore" ${maps.loading ? 'disabled' : ''}>${maps.loading ? 'Cargando…' : 'Ver 20 más'}</button>` : `<span class="sub">${maps.results.length >= 60 ? 'Google muestra hasta 60 por búsqueda: probá otra zona para ver más.' : 'No hay más resultados.'}</span>`}
+      <div class="row" style="padding:12px 14px;background:var(--surface-2)">
+        ${maps.next ? `<button id="mapsMore" ${maps.loading ? 'disabled' : ''}>${maps.loading ? 'Cargando…' : 'Ver 20 más'}</button>` : `<span class="muted" style="font-size:14.5px">${maps.results.length >= 60 ? 'Google muestra hasta 60 por búsqueda: probá otra zona para ver más.' : 'No hay más resultados.'}</span>`}
         <span class="spacer"></span>
         <button class="primary" id="mapsAdd" ${nSel ? '' : 'disabled'}>${nSel ? `Agregar ${nSel} al CRM` : 'Elegí cuáles agregar'}</button>
       </div>
     </div>
-    ${selectable.length ? '' : '<p class="mp-note">Todos estos ya están en tu CRM.</p>'}`;
+    ${selectable.length ? '' : '<p class="hint">Todos estos ya están en tu CRM.</p>'}`;
 }
 async function addMapsToCRM(){
   const rows = maps.results.filter(c => maps.sel.has(c.id)).map(c => ({
