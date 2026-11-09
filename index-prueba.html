@@ -970,6 +970,9 @@ Son 6 preguntas y se contestan con números. Al final les mando de regalo un man
 Pueden contestar así: 1-1, 2-2, 3-2, 4-3, 5-2, 6-1
 
 María · Loomi Suite`;
+const TPL_GRACIAS = `¡Gracias! Acá tenés el manual de regalo, con todo lo que conviene saber para recibir a celíacos e intolerantes a la lactosa: loomisuite.net/manual?m=sintacc
+
+María · Loomi Suite`;
 function templates(){
   const t = crm.meta && crm.meta.wa_templates;
   if (t && Array.isArray(t.items)) return t.items;
@@ -977,6 +980,7 @@ function templates(){
   if (legacy) out.push({id: 't-inicial', name: 'Primer contacto', body: legacy});
   out.push({id: 't-caros', name: 'Usan sistemas caros', body: TPL_CAROS});
   out.push({id: 't-encuesta', name: 'Encuesta sin TACC', body: TPL_ENCUESTA});
+  out.push({id: 't-gracias-encuesta', name: 'Gracias encuesta', body: TPL_GRACIAS});
   return out;
 }
 let tplSel = load('tplSel', '');
