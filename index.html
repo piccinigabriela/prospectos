@@ -856,7 +856,8 @@ function zoneMatch(l, z){
 }
 
 /* ---------- Encuesta sin TACC / sin lactosa (columna encuesta de crm_leads) ---------- */
-// Se manda por WhatsApp (plantilla "Encuesta sin TACC"); la respuesta se pega en la ficha: "1-1, 2-2, 3-2, 4-3, 5-2, 6-1, 7-2, 8-1".
+// Encuesta por charla (10/11): la plantilla "Encuesta sin TACC" abre la charla y Xenia (WhatsApp de Loomi) hace el resto y guarda
+// las respuestas acá sola (función crm_xenia_encuesta). Si alguien contesta con números ("1-1, 2-2…"), también se puede pegar en la ficha.
 // p6 = permiso para aparecer en una futura guía o buscador de alojamientos aptos (sin ese "Sí" no se publica a nadie).
 const ENC_Q = [
   ['p1', 'Desayuno', ['Sí, incluido', 'Sí, con cargo', 'No, pero hay cocina', 'No']],
@@ -970,34 +971,7 @@ Web, motor de reservas, check-in: con 4 o 5 cabañas pasa fácil los USD 200 por
 Loomi Suite hace todo eso desde USD 25. loomisuite.net
 
 María · Loomi Suite`;
-const TPL_ENCUESTA = `Relevamiento: alojamientos aptos para celíacos e intolerantes a la lactosa en Argentina.
-Son 8 preguntas y se contestan con números. Al final les mando de regalo un manual con todo lo que conviene saber.
-
-1. ¿Ofrecen desayuno?
-1) Sí, incluido · 2) Sí, con cargo · 3) No, pero hay cocina equipada · 4) No
-
-2. ¿Ofrecen opciones sin TACC?
-1) No · 2) Productos envasados · 3) Los preparamos en la cocina, con cuidados · 4) Cocina 100 % sin gluten
-
-3. ¿Y sin lactosa?
-1) No · 2) A pedido · 3) Siempre
-
-4. ¿Les piden opciones sin TACC o sin lactosa?
-1) Nunca · 2) A veces · 3) Seguido
-
-5. ¿Lo cuentan en su web o en sus avisos?
-1) Sí · 2) No
-
-6. ¿Les gustaría aparecer gratis en una guía de alojamientos aptos para celíacos e intolerantes a la lactosa?
-1) Sí · 2) No
-
-7. ¿Cómo se enteran de que un huésped es celíaco o intolerante a la lactosa?
-1) Recién cuando llega · 2) Nos avisa por mensaje · 3) Lo pregunta nuestro sistema de reservas antes de llegar (pre check-in)
-
-8. ¿Llevan las reservas con algún sistema?
-1) No: cuaderno, Excel o el calendario de Airbnb o Booking · 2) Sí, un sistema de gestión (si querés, contanos cuál)
-
-Pueden contestar así: 1-1, 2-2, 3-2, 4-3, 5-2, 6-1, 7-2, 8-1
+const TPL_ENCUESTA = `Hola, ¿cómo están? Estamos relevando alojamientos aptos para celíacos e intolerantes a la lactosa en {localidad}. ¿Nos ayudan con unas preguntas cortas? La primera: ¿ofrecen desayuno a sus huéspedes?
 
 María · Loomi Suite`;
 const TPL_GRACIAS = `¡Gracias! Acá tenés el manual de regalo, con todo lo que conviene saber para recibir a celíacos e intolerantes a la lactosa: loomisuite.net/manual?m=sintacc
@@ -1366,8 +1340,8 @@ function renderDrawer(){
 
     <div class="d-sec">
       <h3>Encuesta sin TACC y sin lactosa</h3>
-      ${l.encuesta ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">${ENC_Q.map(([k, label]) => encAns(l, k) ? `<span class="tag muted">${esc(label)}: ${esc(encAns(l, k))}</span>` : '').join('')}${encOport(l) ? '<span class="tag wa">Oportunidad: lo piden y no lo cuentan</span>' : ''}${[1, 2].includes(Number((l.encuesta || {}).p7)) ? '<span class="tag wa">Sin pre check-in que pregunte: le sirve Loomi</span>' : ''}</div>` : ''}
-      ${l.encuesta && /[a-záéíóúñ]{3,}/i.test(l.encuesta.raw || '') ? `<p class="hint" style="margin:0 0 8px">Lo que escribió: ${esc(l.encuesta.raw)}</p>` : ''}
+      ${l.encuesta ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">${l.encuesta.via === 'xenia' ? '<span class="tag wa">Respondió con Xenia</span>' : ''}${ENC_Q.map(([k, label]) => encAns(l, k) ? `<span class="tag muted">${esc(label)}: ${esc(encAns(l, k))}</span>` : '').join('')}${encOport(l) ? '<span class="tag wa">Oportunidad: lo piden y no lo cuentan</span>' : ''}${[1, 2].includes(Number((l.encuesta || {}).p7)) ? '<span class="tag wa">Sin pre check-in que pregunte: le sirve Loomi</span>' : ''}</div>` : ''}
+      ${l.encuesta && /[a-záéíóúñ]{3,}/i.test(l.encuesta.raw || '') ? `<p class="hint" style="margin:0 0 8px">${l.encuesta.via === 'xenia' ? 'Resumen de Xenia' : 'Lo que escribió'}: ${esc(l.encuesta.raw)}</p>` : ''}
       <div class="row" style="gap:8px">
         <input id="dEnc" placeholder="${l.encuesta ? 'Pegar otra respuesta para corregir' : 'Pegá la respuesta: 1-1, 2-2, 3-2, 4-3, 5-2, 6-1, 7-2, 8-1'}" style="flex:1;min-width:0">
         <button class="sm primary" id="dEncSave">Guardar</button>
