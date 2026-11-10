@@ -270,6 +270,8 @@ dialog label{display:grid;gap:4px;font-size:14.5px;color:var(--muted)}
         <option value="p6-1">Quieren estar en la guía</option>
         <option value="sinpre">Sin pre check-in que pregunte (les sirve Loomi)</option>
         <option value="p7-3">Ya tienen pre check-in que pregunta</option>
+        <option value="p8-1">Sin sistema (cuaderno, Excel…)</option>
+        <option value="p8-2">Con sistema de gestión</option>
       </select>
       <select id="pSort" aria-label="Ordenar">
         <option value="next">Ordenar: próxima acción</option>
@@ -854,7 +856,7 @@ function zoneMatch(l, z){
 }
 
 /* ---------- Encuesta sin TACC / sin lactosa (columna encuesta de crm_leads) ---------- */
-// Se manda por WhatsApp (plantilla "Encuesta sin TACC"); la respuesta se pega en la ficha: "1-1, 2-2, 3-2, 4-3, 5-2, 6-1, 7-2".
+// Se manda por WhatsApp (plantilla "Encuesta sin TACC"); la respuesta se pega en la ficha: "1-1, 2-2, 3-2, 4-3, 5-2, 6-1, 7-2, 8-1".
 // p6 = permiso para aparecer en una futura guía o buscador de alojamientos aptos (sin ese "Sí" no se publica a nadie).
 const ENC_Q = [
   ['p1', 'Desayuno', ['Sí, incluido', 'Sí, con cargo', 'No, pero hay cocina', 'No']],
@@ -865,16 +867,18 @@ const ENC_Q = [
   ['p6', 'Quiere estar en la guía', ['Sí', 'No']],
   // p7 (10/11): cómo se enteran de la restricción. 1 y 2 = no tienen pre check-in que lo pregunte (les sirve Loomi)
   ['p7', 'Se enteran', ['Recién cuando llega', 'Por mensaje', 'Pre check-in de su sistema']],
+  // p8 (10/11): si llevan las reservas con un sistema de gestión (para saber cómo abordarlos)
+  ['p8', 'Sistema', ['No: cuaderno, Excel o calendario', 'Sí, un sistema de gestión']],
 ];
 function parseEncuesta(text){
   const s = String(text || '');
   const out = {};
   // pares "pregunta-respuesta": 1-1, 2)3, 3:2, "4 = 3"
-  for (const m of s.matchAll(/(?:^|[^\d])([1-7])\s*[-–—:.)=]\s*([1-4])(?!\d)/g)) out['p' + m[1]] = Number(m[2]);
+  for (const m of s.matchAll(/(?:^|[^\d])([1-8])\s*[-–—:.)=]\s*([1-4])(?!\d)/g)) out['p' + m[1]] = Number(m[2]);
   if (!Object.keys(out).length){
     // solo las respuestas en orden: "1 2 2 3 2" o "12232"
     const d = (s.match(/[1-4]/g) || []);
-    if (d.length >= 5 && d.length <= 7) d.forEach((v, i) => { out['p' + (i + 1)] = Number(v); });
+    if (d.length >= 5 && d.length <= 8) d.forEach((v, i) => { out['p' + (i + 1)] = Number(v); });
   }
   for (const [k, , opts] of ENC_Q) if (out[k] && out[k] > opts.length) delete out[k];
   return Object.keys(out).length ? out : null;
@@ -967,7 +971,7 @@ Loomi Suite hace todo eso desde USD 25. loomisuite.net
 
 María · Loomi Suite`;
 const TPL_ENCUESTA = `Relevamiento: alojamientos aptos para celíacos e intolerantes a la lactosa en Argentina.
-Son 7 preguntas y se contestan con números. Al final les mando de regalo un manual con todo lo que conviene saber.
+Son 8 preguntas y se contestan con números. Al final les mando de regalo un manual con todo lo que conviene saber.
 
 1. ¿Ofrecen desayuno?
 1) Sí, incluido · 2) Sí, con cargo · 3) No, pero hay cocina equipada · 4) No
@@ -990,7 +994,10 @@ Son 7 preguntas y se contestan con números. Al final les mando de regalo un man
 7. ¿Cómo se enteran de que un huésped es celíaco o intolerante a la lactosa?
 1) Recién cuando llega · 2) Nos avisa por mensaje · 3) Lo pregunta nuestro sistema de reservas antes de llegar (pre check-in)
 
-Pueden contestar así: 1-1, 2-2, 3-2, 4-3, 5-2, 6-1, 7-2
+8. ¿Llevan las reservas con algún sistema?
+1) No: cuaderno, Excel o el calendario de Airbnb o Booking · 2) Sí, un sistema de gestión (si querés, contanos cuál)
+
+Pueden contestar así: 1-1, 2-2, 3-2, 4-3, 5-2, 6-1, 7-2, 8-1
 
 María · Loomi Suite`;
 const TPL_GRACIAS = `¡Gracias! Acá tenés el manual de regalo, con todo lo que conviene saber para recibir a celíacos e intolerantes a la lactosa: loomisuite.net/manual?m=sintacc
@@ -1360,8 +1367,9 @@ function renderDrawer(){
     <div class="d-sec">
       <h3>Encuesta sin TACC y sin lactosa</h3>
       ${l.encuesta ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">${ENC_Q.map(([k, label]) => encAns(l, k) ? `<span class="tag muted">${esc(label)}: ${esc(encAns(l, k))}</span>` : '').join('')}${encOport(l) ? '<span class="tag wa">Oportunidad: lo piden y no lo cuentan</span>' : ''}${[1, 2].includes(Number((l.encuesta || {}).p7)) ? '<span class="tag wa">Sin pre check-in que pregunte: le sirve Loomi</span>' : ''}</div>` : ''}
+      ${l.encuesta && /[a-záéíóúñ]{3,}/i.test(l.encuesta.raw || '') ? `<p class="hint" style="margin:0 0 8px">Lo que escribió: ${esc(l.encuesta.raw)}</p>` : ''}
       <div class="row" style="gap:8px">
-        <input id="dEnc" placeholder="${l.encuesta ? 'Pegar otra respuesta para corregir' : 'Pegá la respuesta: 1-1, 2-2, 3-2, 4-3, 5-2, 6-1, 7-2'}" style="flex:1;min-width:0">
+        <input id="dEnc" placeholder="${l.encuesta ? 'Pegar otra respuesta para corregir' : 'Pegá la respuesta: 1-1, 2-2, 3-2, 4-3, 5-2, 6-1, 7-2, 8-1'}" style="flex:1;min-width:0">
         <button class="sm primary" id="dEncSave">Guardar</button>
         ${l.encuesta ? '<button class="sm ghost" id="dEncDel">Borrar</button>' : ''}
       </div>
@@ -1478,7 +1486,7 @@ $('#dBody').addEventListener('click', async e => {
   if (b.id === 'dEncSave'){
     const raw = $('#dEnc').value.trim();
     const enc = parseEncuesta(raw);
-    if (!enc){ toast('No entendí la respuesta. Ejemplo: 1-1, 2-2, 3-2, 4-3, 5-2, 6-1, 7-2'); return; }
+    if (!enc){ toast('No entendí la respuesta. Ejemplo: 1-1, 2-2, 3-2, 4-3, 5-2, 6-1, 7-2, 8-1'); return; }
     const value = {...enc, raw, at: new Date().toISOString()};
     if (await updateLead(l.id, {encuesta: value})){
       toast('Encuesta guardada' + (encOport({encuesta: value}) ? ' · Oportunidad' : ''));
