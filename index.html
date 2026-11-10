@@ -1018,6 +1018,13 @@ function waLink(p, lead){
   const t = curTemplate();
   const text = t && t.body.trim() ? fillTpl(t.body, lead).trim() : '';
   if (!IS_MOBILE) return 'https://web.whatsapp.com/send?phone=' + digitsOf(p.n) + (text ? '&text=' + encodeURIComponent(text) : '');
+  // Android: se fuerza WhatsApp Business (paquete com.whatsapp.w4b), así no se abre el WhatsApp personal (10/11).
+  // Si Business no está instalado, Chrome sigue al link común (browser_fallback_url).
+  if (/Android/i.test(navigator.userAgent)) {
+    const q = 'phone=' + digitsOf(p.n) + (text ? '&text=' + encodeURIComponent(text) : '');
+    const fallback = 'https://wa.me/' + digitsOf(p.n) + (text ? '?text=' + encodeURIComponent(text) : '');
+    return 'intent://send/?' + q + '#Intent;scheme=whatsapp;package=com.whatsapp.w4b;S.browser_fallback_url=' + encodeURIComponent(fallback) + ';end';
+  }
   return 'https://wa.me/' + digitsOf(p.n) + (text ? '?text=' + encodeURIComponent(text) : '');
 }
 const cleanLocation = s => String(s || '').replace(/,?\s*Argentina$/i, '').replace(/\bProvincia de /i, '').replace(/\s*\b[A-Z]\d{4}[A-Z]{0,3}\b/, '').replace(/,\s*,/g, ',').replace(/^[,\s]+|[,\s]+$/g, '');
