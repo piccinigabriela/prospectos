@@ -268,6 +268,8 @@ dialog label{display:grid;gap:4px;font-size:14.5px;color:var(--muted)}
         <option value="p2-4">Sin TACC: cocina 100 % sin gluten</option>
         <option value="p3-1">Sin lactosa: no ofrecen</option>
         <option value="p6-1">Quieren estar en la guía</option>
+        <option value="sinpre">Sin pre check-in que pregunte (les sirve Loomi)</option>
+        <option value="p7-3">Ya tienen pre check-in que pregunta</option>
       </select>
       <select id="pSort" aria-label="Ordenar">
         <option value="next">Ordenar: próxima acción</option>
@@ -376,6 +378,7 @@ dialog label{display:grid;gap:4px;font-size:14.5px;color:var(--muted)}
 <aside class="drawer" id="drawer" aria-hidden="true">
   <div class="d-head">
     <input id="dName" aria-label="Nombre del complejo">
+    <button class="sm" id="dNext" title="Abrir el siguiente de la lista">Siguiente →</button>
     <button class="ghost" id="dClose" title="Cerrar (Esc)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
   </div>
   <div class="d-body" id="dBody"></div>
@@ -851,7 +854,7 @@ function zoneMatch(l, z){
 }
 
 /* ---------- Encuesta sin TACC / sin lactosa (columna encuesta de crm_leads) ---------- */
-// Se manda por WhatsApp (plantilla "Encuesta sin TACC"); la respuesta se pega en la ficha: "1-1, 2-2, 3-2, 4-3, 5-2, 6-1".
+// Se manda por WhatsApp (plantilla "Encuesta sin TACC"); la respuesta se pega en la ficha: "1-1, 2-2, 3-2, 4-3, 5-2, 6-1, 7-2".
 // p6 = permiso para aparecer en una futura guía o buscador de alojamientos aptos (sin ese "Sí" no se publica a nadie).
 const ENC_Q = [
   ['p1', 'Desayuno', ['Sí, incluido', 'Sí, con cargo', 'No, pero hay cocina', 'No']],
@@ -860,16 +863,18 @@ const ENC_Q = [
   ['p4', 'Se lo piden', ['Nunca', 'A veces', 'Seguido']],
   ['p5', 'Lo cuentan', ['Sí', 'No']],
   ['p6', 'Quiere estar en la guía', ['Sí', 'No']],
+  // p7 (10/11): cómo se enteran de la restricción. 1 y 2 = no tienen pre check-in que lo pregunte (les sirve Loomi)
+  ['p7', 'Se enteran', ['Recién cuando llega', 'Por mensaje', 'Pre check-in de su sistema']],
 ];
 function parseEncuesta(text){
   const s = String(text || '');
   const out = {};
   // pares "pregunta-respuesta": 1-1, 2)3, 3:2, "4 = 3"
-  for (const m of s.matchAll(/(?:^|[^\d])([1-6])\s*[-–—:.)=]\s*([1-4])(?!\d)/g)) out['p' + m[1]] = Number(m[2]);
+  for (const m of s.matchAll(/(?:^|[^\d])([1-7])\s*[-–—:.)=]\s*([1-4])(?!\d)/g)) out['p' + m[1]] = Number(m[2]);
   if (!Object.keys(out).length){
     // solo las respuestas en orden: "1 2 2 3 2" o "12232"
     const d = (s.match(/[1-4]/g) || []);
-    if (d.length === 5 || d.length === 6) d.forEach((v, i) => { out['p' + (i + 1)] = Number(v); });
+    if (d.length >= 5 && d.length <= 7) d.forEach((v, i) => { out['p' + (i + 1)] = Number(v); });
   }
   for (const [k, , opts] of ENC_Q) if (out[k] && out[k] > opts.length) delete out[k];
   return Object.keys(out).length ? out : null;
@@ -892,6 +897,7 @@ function encMatch(l, f){
   if (f === 'si') return !!l.encuesta;
   if (f === 'no') return !l.encuesta;
   if (f === 'oport') return !!l.encuesta && encOport(l);
+  if (f === 'sinpre') return !!l.encuesta && [1, 2].includes(Number(l.encuesta.p7));
   const m = /^(p\d)-(\d)$/.exec(f);
   return !!(m && l.encuesta && Number(l.encuesta[m[1]]) === Number(m[2]));
 }
@@ -961,7 +967,7 @@ Loomi Suite hace todo eso desde USD 25. loomisuite.net
 
 María · Loomi Suite`;
 const TPL_ENCUESTA = `Relevamiento: alojamientos aptos para celíacos e intolerantes a la lactosa en Argentina.
-Son 6 preguntas y se contestan con números. Al final les mando de regalo un manual con todo lo que conviene saber.
+Son 7 preguntas y se contestan con números. Al final les mando de regalo un manual con todo lo que conviene saber.
 
 1. ¿Ofrecen desayuno?
 1) Sí, incluido · 2) Sí, con cargo · 3) No, pero hay cocina equipada · 4) No
@@ -981,7 +987,10 @@ Son 6 preguntas y se contestan con números. Al final les mando de regalo un man
 6. ¿Les gustaría aparecer gratis en una guía de alojamientos aptos para celíacos e intolerantes a la lactosa?
 1) Sí · 2) No
 
-Pueden contestar así: 1-1, 2-2, 3-2, 4-3, 5-2, 6-1
+7. ¿Cómo se enteran de que un huésped es celíaco o intolerante a la lactosa?
+1) Recién cuando llega · 2) Nos avisa por mensaje · 3) Lo pregunta nuestro sistema de reservas antes de llegar (pre check-in)
+
+Pueden contestar así: 1-1, 2-2, 3-2, 4-3, 5-2, 6-1, 7-2
 
 María · Loomi Suite`;
 const TPL_GRACIAS = `¡Gracias! Acá tenés el manual de regalo, con todo lo que conviene saber para recibir a celíacos e intolerantes a la lactosa: loomisuite.net/manual?m=sintacc
@@ -1148,6 +1157,7 @@ document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click
 function filterLeads(){
   const t = todayISO(), q = fold(crm.q).trim(), qd = digitsOf(crm.q);
   return crm.leads.filter(l => {
+    if (l.id === crm.openId) return true; // la ficha abierta queda en la lista hasta cerrarla
     if (!zoneMatch(l, crm.zone)) return false;
     if (!encMatch(l, crm.enc)) return false;
     if (!foodMatch(l, crm.food)) return false;
@@ -1270,6 +1280,13 @@ function closeDrawer(){
   renderPipe();
 }
 $('#dClose').addEventListener('click', closeDrawer);
+// Siguiente de la lista tal como se ve (con los filtros); la ficha que se deja ya puede salir de la lista
+$('#dNext').addEventListener('click', () => {
+  const list = filterLeads(), i = list.findIndex(x => x.id === crm.openId);
+  const next = list[i + 1] || null;
+  if (!next){ toast('Es el último de esta lista'); return; }
+  openDrawer(next.id);
+});
 $('#scrim').addEventListener('click', closeDrawer);
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && crm.openId && !document.querySelector('dialog[open]')) closeDrawer(); });
 
@@ -1342,9 +1359,9 @@ function renderDrawer(){
 
     <div class="d-sec">
       <h3>Encuesta sin TACC y sin lactosa</h3>
-      ${l.encuesta ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">${ENC_Q.map(([k, label]) => encAns(l, k) ? `<span class="tag muted">${esc(label)}: ${esc(encAns(l, k))}</span>` : '').join('')}${encOport(l) ? '<span class="tag wa">Oportunidad: lo piden y no lo cuentan</span>' : ''}</div>` : ''}
+      ${l.encuesta ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">${ENC_Q.map(([k, label]) => encAns(l, k) ? `<span class="tag muted">${esc(label)}: ${esc(encAns(l, k))}</span>` : '').join('')}${encOport(l) ? '<span class="tag wa">Oportunidad: lo piden y no lo cuentan</span>' : ''}${[1, 2].includes(Number((l.encuesta || {}).p7)) ? '<span class="tag wa">Sin pre check-in que pregunte: le sirve Loomi</span>' : ''}</div>` : ''}
       <div class="row" style="gap:8px">
-        <input id="dEnc" placeholder="${l.encuesta ? 'Pegar otra respuesta para corregir' : 'Pegá la respuesta: 1-1, 2-2, 3-2, 4-3, 5-2, 6-1'}" style="flex:1;min-width:0">
+        <input id="dEnc" placeholder="${l.encuesta ? 'Pegar otra respuesta para corregir' : 'Pegá la respuesta: 1-1, 2-2, 3-2, 4-3, 5-2, 6-1, 7-2'}" style="flex:1;min-width:0">
         <button class="sm primary" id="dEncSave">Guardar</button>
         ${l.encuesta ? '<button class="sm ghost" id="dEncDel">Borrar</button>' : ''}
       </div>
@@ -1450,13 +1467,18 @@ $('#dBody').addEventListener('click', async e => {
     renderDrawer(); return;
   }
   if (b.dataset.food !== undefined && b.closest('#dFood')){
-    if (await updateLead(l.id, {alimentos: b.dataset.food || null})) renderDrawer();
+    const v = b.dataset.food || null;
+    if (await updateLead(l.id, {alimentos: v})){
+      renderDrawer();
+      const sale = crm.food && !foodMatch({...l, alimentos: v}, crm.food);
+      toast((v === 'si' ? `Guardado: ${l.name} sirve alimentos` : v === 'no' ? `Guardado: ${l.name} no sirve alimentos` : `Guardado: ${l.name} sin dato`) + (sale ? ' · al cerrar sale de esta lista' : ''));
+    }
     return;
   }
   if (b.id === 'dEncSave'){
     const raw = $('#dEnc').value.trim();
     const enc = parseEncuesta(raw);
-    if (!enc){ toast('No entendí la respuesta. Ejemplo: 1-1, 2-2, 3-2, 4-3, 5-2, 6-1'); return; }
+    if (!enc){ toast('No entendí la respuesta. Ejemplo: 1-1, 2-2, 3-2, 4-3, 5-2, 6-1, 7-2'); return; }
     const value = {...enc, raw, at: new Date().toISOString()};
     if (await updateLead(l.id, {encuesta: value})){
       toast('Encuesta guardada' + (encOport({encuesta: value}) ? ' · Oportunidad' : ''));
