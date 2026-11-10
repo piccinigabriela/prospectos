@@ -1010,11 +1010,15 @@ function markEncSent(id){
   const l = crm.leads.find(x => x.id === id); if (!l || l.encuesta || !isEncTpl(curTemplate())) return;
   updateLead(id, {encuesta_enviada: new Date().toISOString()}).then(ok => { if (ok){ toast('Marcado: encuesta enviada'); if (crm.openId === id) renderDrawer(); } });
 }
+// En la compu se abre WhatsApp Web directo, siempre en la misma pestaña ("loomi-wa"): sin la página intermedia de
+// api.whatsapp.com ni el cartel de "abrir aplicación" (10/11). En el celular, wa.me abre la app.
+const IS_MOBILE = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+const WA_TARGET = IS_MOBILE ? '_blank' : 'loomi-wa';
 function waLink(p, lead){
-  let url = 'https://wa.me/' + digitsOf(p.n);
   const t = curTemplate();
-  if (t && t.body.trim()) url += '?text=' + encodeURIComponent(fillTpl(t.body, lead).trim());
-  return url;
+  const text = t && t.body.trim() ? fillTpl(t.body, lead).trim() : '';
+  if (!IS_MOBILE) return 'https://web.whatsapp.com/send?phone=' + digitsOf(p.n) + (text ? '&text=' + encodeURIComponent(text) : '');
+  return 'https://wa.me/' + digitsOf(p.n) + (text ? '?text=' + encodeURIComponent(text) : '');
 }
 const cleanLocation = s => String(s || '').replace(/,?\s*Argentina$/i, '').replace(/\bProvincia de /i, '').replace(/\s*\b[A-Z]\d{4}[A-Z]{0,3}\b/, '').replace(/,\s*,/g, ',').replace(/^[,\s]+|[,\s]+$/g, '');
 
@@ -1191,7 +1195,7 @@ function phoneMini(l){
   if (!ps.length) return l.web ? `<div class="phone"><span class="muted">Sin teléfono</span><a class="ic" href="${esc(webHref(l.web))}" target="_blank" rel="noopener" title="Sitio web" data-stop>${ICON.globe}</a></div>` : '<span class="muted">—</span>';
   const p = ps[0];
   return `<div class="phone"><span class="num">${esc(p.n)}</span>` +
-    (p.k !== 'fijo' ? `<a class="ic" href="${esc(waLink(p, l))}" target="_blank" rel="noopener" title="WhatsApp" data-stop data-wa="${l.id}">${ICON.wa}</a>` : '') +
+    (p.k !== 'fijo' ? `<a class="ic" href="${esc(waLink(p, l))}" target="${WA_TARGET}" rel="noopener" title="WhatsApp" data-stop data-wa="${l.id}">${ICON.wa}</a>` : '') +
     `<a class="ic" href="tel:${esc(p.n)}" title="Llamar" data-stop>${ICON.tel}</a>` +
     (ps.length > 1 ? `<span class="tag muted">+${ps.length - 1}</span>` : '') +
     (l.web ? `<a class="ic" href="${esc(webHref(l.web))}" target="_blank" rel="noopener" title="Sitio web: ${esc(webLabel(l.web))}" data-stop>${ICON.globe}</a>` : '') + `</div>`;
@@ -1314,7 +1318,7 @@ function renderDrawer(){
         <div class="contact-row">
           <span class="num">${esc(p.n)}</span><span class="tag ${p.k}">${KIND_LABEL[p.k] || ''}</span>
           <span class="spacer"></span>
-          ${p.k !== 'fijo' ? `<a class="btn sm primary" href="${esc(waLink(p, l))}" target="_blank" rel="noopener" data-act="openwa">${ICON.wa} WhatsApp</a>` : ''}
+          ${p.k !== 'fijo' ? `<a class="btn sm primary" href="${esc(waLink(p, l))}" target="${WA_TARGET}" rel="noopener" data-act="openwa">${ICON.wa} WhatsApp</a>` : ''}
           <a class="btn sm" href="tel:${esc(p.n)}" data-act="opencall">${ICON.tel} Llamar</a>
         </div>`).join('') || '<p class="muted" style="margin:0">Sin teléfono cargado.</p>'}
       ${(l.web || l.email) ? `<div class="contact-row" style="margin-top:8px">
