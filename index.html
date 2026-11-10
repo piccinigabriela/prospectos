@@ -274,6 +274,7 @@ dialog label{display:grid;gap:4px;font-size:14.5px;color:var(--muted)}
         <option value="p7-3">Ya tienen pre check-in que pregunta</option>
         <option value="p8-1">Sin sistema (cuaderno, Excel…)</option>
         <option value="p8-2">Con sistema de gestión</option>
+        <option value="p9-1">Le serviría el pre check-in (prospecto caliente)</option>
       </select>
       <select id="pSort" aria-label="Ordenar">
         <option value="next">Ordenar: próxima acción</option>
@@ -872,16 +873,18 @@ const ENC_Q = [
   ['p7', 'Se enteran', ['Recién cuando llega', 'Por mensaje', 'Pre check-in de su sistema']],
   // p8 (10/11): si llevan las reservas con un sistema de gestión (para saber cómo abordarlos)
   ['p8', 'Sistema', ['No: cuaderno, Excel o calendario', 'Sí, un sistema de gestión']],
+  // p9 (10/11, la pregunta Xenia solo si se enteran tarde): ¿les serviría un pre check-in que pregunte la alimentación? Sí = prospecto caliente
+  ['p9', 'Le serviría el pre check-in', ['Sí', 'No']],
 ];
 function parseEncuesta(text){
   const s = String(text || '');
   const out = {};
   // pares "pregunta-respuesta": 1-1, 2)3, 3:2, "4 = 3"
-  for (const m of s.matchAll(/(?:^|[^\d])([1-8])\s*[-–—:.)=]\s*([1-4])(?!\d)/g)) out['p' + m[1]] = Number(m[2]);
+  for (const m of s.matchAll(/(?:^|[^\d])([1-9])\s*[-–—:.)=]\s*([1-4])(?!\d)/g)) out['p' + m[1]] = Number(m[2]);
   if (!Object.keys(out).length){
     // solo las respuestas en orden: "1 2 2 3 2" o "12232"
     const d = (s.match(/[1-4]/g) || []);
-    if (d.length >= 5 && d.length <= 8) d.forEach((v, i) => { out['p' + (i + 1)] = Number(v); });
+    if (d.length >= 5 && d.length <= 9) d.forEach((v, i) => { out['p' + (i + 1)] = Number(v); });
   }
   for (const [k, , opts] of ENC_Q) if (out[k] && out[k] > opts.length) delete out[k];
   return Object.keys(out).length ? out : null;
@@ -1235,7 +1238,7 @@ function renderPipe(){
   $('#tbPipe').innerHTML = list.length ? list.map(l => {
     const dc = dueClass(l.next_action_at, l.status);
     return `<tr data-id="${l.id}" class="${crm.openId === l.id ? 'sel' : ''}">
-      <td><div class="name">${esc(l.name)}${l.encuesta ? ` <span class="tag ${encOport(l) ? 'wa' : 'muted'}" title="${esc(encSummary(l))}">${encOport(l) ? 'Oportunidad' : 'Encuesta'}</span>` : ''}${!l.encuesta && l.encuesta_enviada ? ` <span class="tag muted" title="Encuesta enviada el ${esc(fmtDay(isoLocal(l.encuesta_enviada)))}">Encuesta enviada</span>` : ''}${foodOf(l) === 'si' ? ' <span class="tag muted" title="Sirve alimentos">🍽 Alimentos</span>' : foodOf(l) === 'no' ? ' <span class="tag muted" title="No sirve alimentos">Sin alimentos</span>' : ''}</div>${l.location ? `<div class="meta">${esc(l.location)}</div>` : ''}</td>
+      <td><div class="name">${esc(l.name)}${l.encuesta ? ` <span class="tag ${encOport(l) ? 'wa' : 'muted'}" title="${esc(encSummary(l))}">${encOport(l) ? 'Oportunidad' : 'Encuesta'}</span>` : ''}${Number((l.encuesta || {}).p9) === 1 ? ' <span class="tag wa" title="Le serviría el pre check-in">🔥 Pre check-in</span>' : ''}${!l.encuesta && l.encuesta_enviada ? ` <span class="tag muted" title="Encuesta enviada el ${esc(fmtDay(isoLocal(l.encuesta_enviada)))}">Encuesta enviada</span>` : ''}${foodOf(l) === 'si' ? ' <span class="tag muted" title="Sirve alimentos">🍽 Alimentos</span>' : foodOf(l) === 'no' ? ' <span class="tag muted" title="No sirve alimentos">Sin alimentos</span>' : ''}</div>${l.location ? `<div class="meta">${esc(l.location)}</div>` : ''}</td>
       <td>${phoneMini(l)}</td>
       <td><span class="st st-${l.status}">${ST[l.status] || l.status}</span></td>
       <td class="${l.last_contact_at ? '' : 'hide-m'}" data-l="Último contacto:">${l.last_contact_at ? esc(relTime(l.last_contact_at)) : '<span class="muted">—</span>'}</td>
@@ -1352,7 +1355,7 @@ function renderDrawer(){
     <div class="d-sec">
       <h3>Encuesta sin TACC y sin lactosa</h3>
       ${!l.encuesta ? `<div class="row" style="gap:8px;margin-bottom:8px;align-items:center">${l.encuesta_enviada ? `<span class="tag wa">Enviada el ${esc(fmtDay(isoLocal(l.encuesta_enviada)))}</span><button class="sm ghost" id="dEncSent">Desmarcar</button>` : '<span class="muted">Todavía no se la mandaste.</span><button class="sm" id="dEncSent">Marcar como enviada</button>'}</div>` : ''}
-      ${l.encuesta ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">${l.encuesta.via === 'xenia' ? '<span class="tag wa">Respondió con Xenia</span>' : ''}${ENC_Q.map(([k, label]) => encAns(l, k) ? `<span class="tag muted">${esc(label)}: ${esc(encAns(l, k))}</span>` : '').join('')}${encOport(l) ? '<span class="tag wa">Oportunidad: lo piden y no lo cuentan</span>' : ''}${[1, 2].includes(Number((l.encuesta || {}).p7)) ? '<span class="tag wa">Sin pre check-in que pregunte: le sirve Loomi</span>' : ''}</div>` : ''}
+      ${l.encuesta ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">${l.encuesta.via === 'xenia' ? '<span class="tag wa">Respondió con Xenia</span>' : ''}${ENC_Q.map(([k, label]) => encAns(l, k) ? `<span class="tag muted">${esc(label)}: ${esc(encAns(l, k))}</span>` : '').join('')}${encOport(l) ? '<span class="tag wa">Oportunidad: lo piden y no lo cuentan</span>' : ''}${[1, 2].includes(Number((l.encuesta || {}).p7)) ? '<span class="tag wa">Sin pre check-in que pregunte: le sirve Loomi</span>' : ''}${Number((l.encuesta || {}).p9) === 1 ? '<span class="tag wa">🔥 Le serviría el pre check-in</span>' : ''}</div>` : ''}
       ${l.encuesta && /[a-záéíóúñ]{3,}/i.test(l.encuesta.raw || '') ? `<p class="hint" style="margin:0 0 8px">${l.encuesta.via === 'xenia' ? 'Resumen de Xenia' : 'Lo que escribió'}: ${esc(l.encuesta.raw)}</p>` : ''}
       <div class="row" style="gap:8px">
         <input id="dEnc" placeholder="${l.encuesta ? 'Pegar otra respuesta para corregir' : 'Pegá la respuesta: 1-1, 2-2, 3-2, 4-3, 5-2, 6-1, 7-2, 8-1'}" style="flex:1;min-width:0">
