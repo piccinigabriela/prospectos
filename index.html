@@ -260,6 +260,8 @@ dialog label{display:grid;gap:4px;font-size:14.5px;color:var(--muted)}
       <select id="pEnc" aria-label="Encuesta" style="max-width:230px">
         <option value="">Encuesta: todos</option>
         <option value="si">Respondieron la encuesta</option>
+        <option value="noenv">No se la mandé</option>
+        <option value="env">Se la mandé y no respondió</option>
         <option value="no">No respondieron</option>
         <option value="oport">Oportunidad: lo piden y no lo cuentan</option>
         <option value="p2-1">Sin TACC: no ofrecen</option>
@@ -901,6 +903,8 @@ function encMatch(l, f){
   if (!f) return true;
   if (f === 'si') return !!l.encuesta;
   if (f === 'no') return !l.encuesta;
+  if (f === 'noenv') return !l.encuesta && !l.encuesta_enviada;
+  if (f === 'env') return !l.encuesta && !!l.encuesta_enviada;
   if (f === 'oport') return !!l.encuesta && encOport(l);
   if (f === 'sinpre') return !!l.encuesta && [1, 2].includes(Number(l.encuesta.p7));
   const m = /^(p\d)-(\d)$/.exec(f);
@@ -997,6 +1001,12 @@ const fillTpl = (body, lead) => String(body || '')
   .replace(/\{nombre\}/gi, lead.name || '')
   .replace(/\{localidad\}/gi, zoneOf(lead.location) || 'su zona')
   .replace(/\{provincia\}/gi, provOf(lead) || '');
+// ¿La plantilla elegida es la de la encuesta? Al abrir WhatsApp con ella, el prospecto queda "Encuesta enviada" (10/11)
+const isEncTpl = t => !!t && (t.id === 't-encuesta' || /relev(ando|amiento)/i.test(t.body || '') && /cel[ií]ac/i.test(t.body || ''));
+function markEncSent(id){
+  const l = crm.leads.find(x => x.id === id); if (!l || l.encuesta || !isEncTpl(curTemplate())) return;
+  updateLead(id, {encuesta_enviada: new Date().toISOString()}).then(ok => { if (ok){ toast('Marcado: encuesta enviada'); if (crm.openId === id) renderDrawer(); } });
+}
 function waLink(p, lead){
   let url = 'https://wa.me/' + digitsOf(p.n);
   const t = curTemplate();
@@ -1178,7 +1188,7 @@ function phoneMini(l){
   if (!ps.length) return l.web ? `<div class="phone"><span class="muted">Sin teléfono</span><a class="ic" href="${esc(webHref(l.web))}" target="_blank" rel="noopener" title="Sitio web" data-stop>${ICON.globe}</a></div>` : '<span class="muted">—</span>';
   const p = ps[0];
   return `<div class="phone"><span class="num">${esc(p.n)}</span>` +
-    (p.k !== 'fijo' ? `<a class="ic" href="${esc(waLink(p, l))}" target="_blank" rel="noopener" title="WhatsApp" data-stop>${ICON.wa}</a>` : '') +
+    (p.k !== 'fijo' ? `<a class="ic" href="${esc(waLink(p, l))}" target="_blank" rel="noopener" title="WhatsApp" data-stop data-wa="${l.id}">${ICON.wa}</a>` : '') +
     `<a class="ic" href="tel:${esc(p.n)}" title="Llamar" data-stop>${ICON.tel}</a>` +
     (ps.length > 1 ? `<span class="tag muted">+${ps.length - 1}</span>` : '') +
     (l.web ? `<a class="ic" href="${esc(webHref(l.web))}" target="_blank" rel="noopener" title="Sitio web: ${esc(webLabel(l.web))}" data-stop>${ICON.globe}</a>` : '') + `</div>`;
@@ -1225,7 +1235,7 @@ function renderPipe(){
   $('#tbPipe').innerHTML = list.length ? list.map(l => {
     const dc = dueClass(l.next_action_at, l.status);
     return `<tr data-id="${l.id}" class="${crm.openId === l.id ? 'sel' : ''}">
-      <td><div class="name">${esc(l.name)}${l.encuesta ? ` <span class="tag ${encOport(l) ? 'wa' : 'muted'}" title="${esc(encSummary(l))}">${encOport(l) ? 'Oportunidad' : 'Encuesta'}</span>` : ''}${foodOf(l) === 'si' ? ' <span class="tag muted" title="Sirve alimentos">🍽 Alimentos</span>' : foodOf(l) === 'no' ? ' <span class="tag muted" title="No sirve alimentos">Sin alimentos</span>' : ''}</div>${l.location ? `<div class="meta">${esc(l.location)}</div>` : ''}</td>
+      <td><div class="name">${esc(l.name)}${l.encuesta ? ` <span class="tag ${encOport(l) ? 'wa' : 'muted'}" title="${esc(encSummary(l))}">${encOport(l) ? 'Oportunidad' : 'Encuesta'}</span>` : ''}${!l.encuesta && l.encuesta_enviada ? ` <span class="tag muted" title="Encuesta enviada el ${esc(fmtDay(isoLocal(l.encuesta_enviada)))}">Encuesta enviada</span>` : ''}${foodOf(l) === 'si' ? ' <span class="tag muted" title="Sirve alimentos">🍽 Alimentos</span>' : foodOf(l) === 'no' ? ' <span class="tag muted" title="No sirve alimentos">Sin alimentos</span>' : ''}</div>${l.location ? `<div class="meta">${esc(l.location)}</div>` : ''}</td>
       <td>${phoneMini(l)}</td>
       <td><span class="st st-${l.status}">${ST[l.status] || l.status}</span></td>
       <td class="${l.last_contact_at ? '' : 'hide-m'}" data-l="Último contacto:">${l.last_contact_at ? esc(relTime(l.last_contact_at)) : '<span class="muted">—</span>'}</td>
@@ -1241,6 +1251,7 @@ $('#pSort').addEventListener('change', e => { crm.sort = e.target.value; store('
 $('#pEnc').addEventListener('change', e => { crm.enc = e.target.value; store('enc', crm.enc); renderPipe(); });
 $('#pFood').addEventListener('change', e => { crm.food = e.target.value; store('food', crm.food); renderPipe(); });
 $('#tbPipe').addEventListener('click', e => {
+  const wa = e.target.closest('[data-wa]'); if (wa) markEncSent(wa.dataset.wa);
   if (e.target.closest('[data-stop]')) return;
   const tr = e.target.closest('tr[data-id]'); if (tr) openDrawer(tr.dataset.id);
 });
@@ -1340,6 +1351,7 @@ function renderDrawer(){
 
     <div class="d-sec">
       <h3>Encuesta sin TACC y sin lactosa</h3>
+      ${!l.encuesta ? `<div class="row" style="gap:8px;margin-bottom:8px;align-items:center">${l.encuesta_enviada ? `<span class="tag wa">Enviada el ${esc(fmtDay(isoLocal(l.encuesta_enviada)))}</span><button class="sm ghost" id="dEncSent">Desmarcar</button>` : '<span class="muted">Todavía no se la mandaste.</span><button class="sm" id="dEncSent">Marcar como enviada</button>'}</div>` : ''}
       ${l.encuesta ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">${l.encuesta.via === 'xenia' ? '<span class="tag wa">Respondió con Xenia</span>' : ''}${ENC_Q.map(([k, label]) => encAns(l, k) ? `<span class="tag muted">${esc(label)}: ${esc(encAns(l, k))}</span>` : '').join('')}${encOport(l) ? '<span class="tag wa">Oportunidad: lo piden y no lo cuentan</span>' : ''}${[1, 2].includes(Number((l.encuesta || {}).p7)) ? '<span class="tag wa">Sin pre check-in que pregunte: le sirve Loomi</span>' : ''}</div>` : ''}
       ${l.encuesta && /[a-záéíóúñ]{3,}/i.test(l.encuesta.raw || '') ? `<p class="hint" style="margin:0 0 8px">${l.encuesta.via === 'xenia' ? 'Resumen de Xenia' : 'Lo que escribió'}: ${esc(l.encuesta.raw)}</p>` : ''}
       <div class="row" style="gap:8px">
@@ -1419,7 +1431,8 @@ $('#dBody').addEventListener('click', async e => {
   const l = curLead(); if (!l) return;
   const b = e.target.closest('button,a'); if (!b) return;
   if (b.dataset.kind){ crm.composeKind = b.dataset.kind; document.querySelectorAll('#dKinds button').forEach(x => x.classList.toggle('on', x === b)); $('#dNote').focus(); return; }
-  if (b.dataset.act === 'openwa'){ crm.composeKind = 'whatsapp'; setTimeout(renderDrawerKinds, 0); return; }
+  if (b.dataset.act === 'openwa'){ crm.composeKind = 'whatsapp'; setTimeout(renderDrawerKinds, 0); markEncSent(l.id); return; }
+  if (b.id === 'dEncSent'){ if (await updateLead(l.id, {encuesta_enviada: l.encuesta_enviada ? null : new Date().toISOString()})) renderDrawer(); return; }
   if (b.dataset.act === 'opencall'){ crm.composeKind = 'llamada'; setTimeout(renderDrawerKinds, 0); return; }
   if (b.dataset.next){
     if (b.dataset.next === 'clear') await updateLead(l.id, {next_action_at: null, next_action: null});
@@ -1550,8 +1563,8 @@ async function exportCRM(){
   if (error) return toast('No se pudieron leer las notas');
   const byLead = {};
   for (const n of notes || []) (byLead[n.lead_id] ||= []).push(`${isoLocal(new Date(n.created_at))} ${(KIND[n.kind] || [, n.kind])[1]}: ${n.body}`);
-  const head = ['Nombre del complejo','Teléfono/WhatsApp','Página Web','Email','Instagram','Zona','Provincia','Sirve alimentos','Encuesta','Estado','Último contacto','Próxima acción (fecha)','Próxima acción','Notas'];
-  const rows = filterLeads().map(l => [l.name, phonesToText(l.phones), l.web || '', l.email || '', l.instagram || '', l.location || '', provOf(l), foodOf(l) === 'si' ? 'Sí' : foodOf(l) === 'no' ? 'No' : '', encSummary(l), ST[l.status] || l.status,
+  const head = ['Nombre del complejo','Teléfono/WhatsApp','Página Web','Email','Instagram','Zona','Provincia','Sirve alimentos','Encuesta enviada','Encuesta','Estado','Último contacto','Próxima acción (fecha)','Próxima acción','Notas'];
+  const rows = filterLeads().map(l => [l.name, phonesToText(l.phones), l.web || '', l.email || '', l.instagram || '', l.location || '', provOf(l), foodOf(l) === 'si' ? 'Sí' : foodOf(l) === 'no' ? 'No' : '', l.encuesta_enviada ? isoLocal(new Date(l.encuesta_enviada)).slice(0, 10) : '', encSummary(l), ST[l.status] || l.status,
     l.last_contact_at ? isoLocal(new Date(l.last_contact_at)) : '', l.next_action_at || '', l.next_action || '', (byLead[l.id] || []).join(' | ')]);
   const csv = [head, ...rows].map(r => r.map(c => { c = String(c ?? ''); return /[";\n]/.test(c) ? '"' + c.replace(/"/g, '""') + '"' : c; }).join(';')).join('\r\n');
   const a = document.createElement('a');
