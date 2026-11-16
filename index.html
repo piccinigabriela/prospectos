@@ -269,6 +269,7 @@ dialog label{display:grid;gap:4px;font-size:14.5px;color:var(--muted)}
         <option value="p2-3">Sin TACC: cocina con cuidados</option>
         <option value="p2-4">Sin TACC: cocina 100 % sin gluten</option>
         <option value="p3-1">Sin lactosa: no ofrecen</option>
+        <option value="mapa-si">Quiere aparecer en el mapa</option>
         <option value="p6-1">Quieren estar en la guía</option>
         <option value="sinpre">Sin pre check-in que pregunte (les sirve Loomi)</option>
         <option value="p7-3">Ya tienen pre check-in que pregunta</option>
@@ -892,9 +893,33 @@ function parseEncuesta(text){
 }
 const encAns = (l, k) => { const e = l.encuesta; const v = e && Number(e[k]); const q = ENC_Q.find(x => x[0] === k); return v && q ? q[2][v - 1] : ''; };
 const encOport = l => { const e = l.encuesta || {}; return Number(e.p4) >= 2 && Number(e.p5) === 2; };
+/* Encuesta nueva de Xenia (16/11): comida, cocina (si/no), compras y sin_gluten (texto), categoria, sin_lactosa (si/no),
+   mapa (si/no = permiso para publicar en el Mapa sin gluten) y mapa_at (fecha). Las p1 a p9 de arriba siguen valiendo para las respuestas viejas. */
+const ENC_CAT = {envasados: 'Productos envasados', cocina_con_cuidados: 'Cocina con cuidados', area_exclusiva: 'Área exclusiva sin gluten', cocina_sin_gluten: 'Cocina 100 % sin gluten', cocina_huespedes: 'Cocina para los huéspedes', solo_cocina: 'Solo cocina', ninguna: 'Ninguna'};
+const encYN = v => { const t = String(v ?? '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''); return v === true || t === 'si' || t === 'true' ? 'si' : v === false || t === 'no' || t === 'false' ? 'no' : ''; };
+const encMapa = l => encYN((l.encuesta || {}).mapa);
+const encDay = v => /^\d{4}-\d{2}-\d{2}$/.test(String(v)) ? String(v) : isoLocal(v);
+function encNew(l){
+  const e = l.encuesta || {}, tags = [], texts = [];
+  const sino = (label, v) => { const x = encYN(v); if (x) tags.push([label, x === 'si' ? 'Sí' : 'No']); };
+  sino('Sirve comida', e.comida); sino('Cocina equipada', e.cocina);
+  const cat = String(e.categoria || '').trim();
+  if (cat) tags.push(['Sin gluten', ENC_CAT[cat] || cat]);
+  sino('Sin lactosa', e.sin_lactosa);
+  for (const [label, v] of [['Dónde compran productos sin TACC', e.compras], ['Opciones sin gluten o sin lactosa', e.sin_gluten]]) if (String(v ?? '').trim()) texts.push([label, String(v).trim()]);
+  return {tags, texts, mapa: encMapa(l), mapaAt: e.mapa_at};
+}
 function encSummary(l){
   if (!l.encuesta) return '';
-  return ENC_Q.map(([k, label]) => encAns(l, k) ? `${label}: ${encAns(l, k)}` : '').filter(Boolean).join(' · ');
+  const n = encNew(l);
+  return [...ENC_Q.map(([k, label]) => encAns(l, k) ? `${label}: ${encAns(l, k)}` : ''), ...n.tags.map(([a, b]) => `${a}: ${b}`), n.mapa ? 'Mapa: ' + (n.mapa === 'si' ? 'Sí' : 'No') : ''].filter(Boolean).join(' · ');
+}
+function encNewHtml(l){
+  const n = encNew(l);
+  const tags = n.tags.map(([a, b]) => `<span class="tag muted">${esc(a)}: ${esc(b)}</span>`).join('') +
+    (n.mapa ? `<span class="tag ${n.mapa === 'si' ? 'wa' : 'muted'}">${n.mapa === 'si' ? '🗺 Quiere aparecer en el mapa' : 'No quiere aparecer en el mapa'}${n.mapaAt ? ' · ' + esc(fmtDay(encDay(n.mapaAt))) : ''}</span>` : '');
+  const texts = n.texts.map(([a, b]) => `<p style="margin:0 0 8px;font-size:14.5px;line-height:1.45"><b>${esc(a)}:</b> ${esc(b)}</p>`).join('');
+  return {tags, texts};
 }
 /* ---------- Sirve alimentos (columna alimentos de crm_leads: 'si' | 'no' | null) ----------
    Se marca a mano en la ficha. Si no está marcado y respondió la encuesta, se toma de la pregunta 1 (desayuno):
@@ -910,6 +935,7 @@ function encMatch(l, f){
   if (f === 'noenv') return !l.encuesta && !l.encuesta_enviada;
   if (f === 'env') return !l.encuesta && !!l.encuesta_enviada;
   if (f === 'oport') return !!l.encuesta && encOport(l);
+  if (f === 'mapa-si') return !!l.encuesta && encMapa(l) === 'si';
   if (f === 'sinpre') return !!l.encuesta && [1, 2].includes(Number(l.encuesta.p7));
   const m = /^(p\d)-(\d)$/.exec(f);
   return !!(m && l.encuesta && Number(l.encuesta[m[1]]) === Number(m[2]));
@@ -979,7 +1005,7 @@ Web, motor de reservas, check-in: con 4 o 5 cabañas pasa fácil los USD 200 por
 Loomi Suite hace todo eso desde USD 25. loomisuite.net
 
 María · Loomi Suite`;
-const TPL_ENCUESTA = `Hola, ¿cómo están? Estamos relevando alojamientos aptos para celíacos e intolerantes a la lactosa en {localidad}. ¿Nos ayudan con unas preguntas cortas? La primera: ¿ofrecen desayuno a sus huéspedes?
+const TPL_ENCUESTA = `Hola, ¿cómo están? Estamos armando el Mapa sin gluten, un mapa gratuito para que viajeros celíacos encuentren dónde alojarse en {localidad}. ¿Nos ayudan con unas preguntas cortas? La primera: ¿sirven comida a sus huéspedes?
 
 María · Loomi Suite`;
 const TPL_GRACIAS = `¡Gracias! Acá tenés el manual de regalo, con todo lo que conviene saber para recibir a celíacos e intolerantes a la lactosa: loomisuite.net/manual?m=sintacc
@@ -991,7 +1017,7 @@ function templates(){
   const out = [], legacy = (settings.template || '').trim();
   if (legacy) out.push({id: 't-inicial', name: 'Primer contacto', body: legacy});
   out.push({id: 't-caros', name: 'Usan sistemas caros', body: TPL_CAROS});
-  out.push({id: 't-encuesta', name: 'Encuesta sin TACC', body: TPL_ENCUESTA});
+  out.push({id: 't-encuesta', name: 'Encuesta Mapa sin gluten', body: TPL_ENCUESTA});
   out.push({id: 't-gracias-encuesta', name: 'Gracias encuesta', body: TPL_GRACIAS});
   return out;
 }
@@ -1391,7 +1417,7 @@ function renderDrawer(){
     <div class="d-sec">
       <h3>Encuesta sin TACC y sin lactosa</h3>
       ${!l.encuesta ? `<div class="row" style="gap:8px;margin-bottom:8px;align-items:center">${l.encuesta_enviada ? `<span class="tag wa">Enviada el ${esc(fmtDay(isoLocal(l.encuesta_enviada)))}</span><button class="sm ghost" id="dEncSent">Desmarcar</button>` : '<span class="muted">Todavía no se la mandaste.</span><button class="sm" id="dEncSent">Marcar como enviada</button>'}</div>` : ''}
-      ${l.encuesta ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">${l.encuesta.via === 'xenia' ? '<span class="tag wa">Respondió con Xenia</span>' : ''}${ENC_Q.map(([k, label]) => encAns(l, k) ? `<span class="tag muted">${esc(label)}: ${esc(encAns(l, k))}</span>` : '').join('')}${encOport(l) ? '<span class="tag wa">Oportunidad: lo piden y no lo cuentan</span>' : ''}${[1, 2].includes(Number((l.encuesta || {}).p7)) ? '<span class="tag wa">Sin pre check-in que pregunte: le sirve Loomi</span>' : ''}${Number((l.encuesta || {}).p9) === 1 ? '<span class="tag wa">🔥 Le serviría el pre check-in</span>' : ''}</div>` : ''}
+      ${l.encuesta ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">${l.encuesta.via === 'xenia' ? '<span class="tag wa">Respondió con Xenia</span>' : ''}${ENC_Q.map(([k, label]) => encAns(l, k) ? `<span class="tag muted">${esc(label)}: ${esc(encAns(l, k))}</span>` : '').join('')}${encOport(l) ? '<span class="tag wa">Oportunidad: lo piden y no lo cuentan</span>' : ''}${[1, 2].includes(Number((l.encuesta || {}).p7)) ? '<span class="tag wa">Sin pre check-in que pregunte: le sirve Loomi</span>' : ''}${Number((l.encuesta || {}).p9) === 1 ? '<span class="tag wa">🔥 Le serviría el pre check-in</span>' : ''}${encNewHtml(l).tags}</div>${encNewHtml(l).texts}` : ''}
       ${l.encuesta && /[a-záéíóúñ]{3,}/i.test(l.encuesta.raw || '') ? `<p class="hint" style="margin:0 0 8px">${l.encuesta.via === 'xenia' ? 'Resumen de Xenia' : 'Lo que escribió'}: ${esc(l.encuesta.raw)}</p>` : ''}
       <div class="row" style="gap:8px">
         <input id="dEnc" placeholder="${l.encuesta ? 'Pegar otra respuesta para corregir' : 'Pegá la respuesta: 1-1, 2-2, 3-2, 4-3, 5-2, 6-1, 7-2, 8-1'}" style="flex:1;min-width:0">
