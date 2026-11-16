@@ -1060,7 +1060,7 @@ const cleanLocation = s => String(s || '').replace(/,?\s*Argentina$/i, '').repla
 function mailLink(lead){
   const nombre = lead.name || 'tu alojamiento', loc = zoneOf(lead.location);
   const subject = `¿${nombre} en el Mapa sin gluten?`;
-  const body = `Muchos celíacos eligen dónde alojarse según lo que pueden comer. Por eso en Loomi estamos armando el Mapa sin gluten, un buscador de alojamientos para celíacos en toda la Argentina, y nos gustaría sumar a ${nombre}${loc ? ', en ' + loc : ''}. Aparecer es gratis.
+  const body = `Cada vez más personas eligen dónde alojarse según lo que pueden comer. Por eso en Loomi estamos armando el Mapa sin gluten, un buscador de alojamientos sin gluten en toda la Argentina, y nos gustaría sumar a ${nombre}${loc ? ', en ' + loc : ''}. Aparecer es gratis.
 Si nos respondés este mail con estas tres respuestas, armamos tu ficha y te la mandamos para que la apruebes antes de publicarla:
 
 1. ¿Sirven comida a los huéspedes? Si no, ¿las unidades tienen cocina equipada?
